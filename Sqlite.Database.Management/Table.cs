@@ -119,7 +119,7 @@ namespace Sqlite.Database.Management
 
                 if (column.CheckExpression != null)
                 {
-                    sb.Append($" CHECK({column.CheckExpression})");
+                    sb.Append($" CHECK({column.Name} {column.CheckExpression})");
                 }
 
                 sb.AppendLine(index < Columns.Count - 1 ? "," : "");

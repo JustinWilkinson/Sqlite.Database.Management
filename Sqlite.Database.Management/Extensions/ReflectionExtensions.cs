@@ -30,10 +30,7 @@ namespace Sqlite.Database.Management.Extensions
         public static Action<T, object> GetSetter<T>(this PropertyInfo property) => GetSetDelegate<T>(property.SetMethod);
 
         #region Helpers
-        /// <summary>
-        /// Generic helper method.
-        /// </summary>
-        private static readonly MethodInfo _genericHelper = typeof(ReflectionExtensions).GetMethod(nameof(GetSetDelegateHelper), BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly MethodInfo _genericSetHelper = typeof(ReflectionExtensions).GetMethod(nameof(GetSetDelegateHelper), BindingFlags.Static | BindingFlags.NonPublic);
 
         /// <summary>
         /// Helper method that returns a setter for a property using the object class.
@@ -44,7 +41,7 @@ namespace Sqlite.Database.Management.Extensions
         private static Action<T, object> GetSetDelegate<T>(MethodInfo method)
         {
             // Supply the type arguments to the generic helper.
-            MethodInfo oConstructedHelper = _genericHelper.MakeGenericMethod(typeof(T), method.GetParameters()[0].ParameterType);
+            MethodInfo oConstructedHelper = _genericSetHelper.MakeGenericMethod(typeof(T), method.GetParameters()[0].ParameterType);
 
             // Cast the result to the right kind of delegate and return it. The null argument is because it's a static method
             return (Action<T, object>)oConstructedHelper.Invoke(null, new[] { method });

@@ -13,7 +13,7 @@ namespace Sqlite.Database.Management.Mapping
     /// Maps a row in a table to an object of T.
     /// </summary>
     /// <typeparam name="T">Type of object to map to.</typeparam>
-    internal interface IRowMapper<T>
+    public interface IRowMapper<T>
     {
         /// <summary>
         /// Maps a SQLiteDataReader to an object of type T.
