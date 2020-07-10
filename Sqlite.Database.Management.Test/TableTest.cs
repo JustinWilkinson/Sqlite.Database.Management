@@ -207,7 +207,7 @@ namespace Sqlite.Database.Management.Test
                 Columns = new List<Column>
                 {
                     new Column("Column1"),
-                    new Column("Column2", ColumnType.Integer) { CheckExpression = "Column2 IN (0,1)" }
+                    new Column("Column2", ColumnType.Integer) { CheckExpression = "IN (0,1)" }
                 }
             };
 
