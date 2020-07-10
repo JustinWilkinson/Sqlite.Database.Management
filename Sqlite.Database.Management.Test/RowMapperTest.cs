@@ -1,4 +1,5 @@
-﻿using System.Data.SQLite;
+﻿using Sqlite.Database.Management.Mapping;
+using System.Data.SQLite;
 using Xunit;
 
 namespace Sqlite.Database.Management.Test
