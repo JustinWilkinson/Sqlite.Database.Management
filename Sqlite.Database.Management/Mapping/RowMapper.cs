@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 
-namespace Sqlite.Database.Management
+namespace Sqlite.Database.Management.Mapping
 {
     /// <summary>
     /// Maps a row in a table to an object of T.
