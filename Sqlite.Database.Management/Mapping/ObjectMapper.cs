@@ -1,7 +1,10 @@
 ﻿using Sqlite.Database.Management.Enumerations;
+using Sqlite.Database.Management.Exceptions;
 using Sqlite.Database.Management.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
+using System.Linq;
 using System.Reflection;
 
 namespace Sqlite.Database.Management.Mapping
@@ -68,20 +71,26 @@ namespace Sqlite.Database.Management.Mapping
         public static Column GetColumn(PropertyInfo property)
         {
             var type = property.PropertyType;
-            
+            var name = property.Name;
+
+            if (Table.PrimaryKey == null && (name.Equals("Id", StringComparison.OrdinalIgnoreCase) || name.Equals($"{Table.Name}Id", StringComparison.OrdinalIgnoreCase)))
+            {
+                Table.PrimaryKey = name;
+            }
+
             if (type.IsValueType)
             {
                 if (_integerTypes.Contains(type))
                 {
-                    return new Column(property.Name, ColumnType.Integer) { Nullable = false };
+                    return new Column(name, ColumnType.Integer) { Nullable = false };
                 }
                 else if (_realTypes.Contains(type))
                 {
-                    return new Column(property.Name, ColumnType.Real) { Nullable = false };
+                    return new Column(name, ColumnType.Real) { Nullable = false };
                 }
                 else if (type == typeof(bool))
                 {
-                    return new Column(property.Name, ColumnType.Integer) { Nullable = false, CheckExpression = "IN (0, 1)" };
+                    return new Column(name, ColumnType.Integer) { Nullable = false, CheckExpression = "IN (0, 1)" };
                 }
             }
             else
@@ -91,15 +100,15 @@ namespace Sqlite.Database.Management.Mapping
                 {
                     if (_integerTypes.Contains(underlyingType))
                     {
-                        return new Column(property.Name, ColumnType.Integer);
+                        return new Column(name, ColumnType.Integer);
                     }
                     if (_realTypes.Contains(underlyingType))
                     {
-                        return new Column(property.Name, ColumnType.Real);
+                        return new Column(name, ColumnType.Real);
                     }
                     else if (underlyingType == typeof(bool))
                     {
-                        return new Column(property.Name, ColumnType.Integer) { CheckExpression = "IN (0, 1, NULL)" };
+                        return new Column(name, ColumnType.Integer) { CheckExpression = "IN (0, 1, NULL)" };
                     }
                 }
             }
@@ -110,6 +119,55 @@ namespace Sqlite.Database.Management.Mapping
             }
 
             return new Column(property.Name);
+        }
+
+        /// <summary>
+        /// Gets an insert statement for an instance of T.
+        /// </summary>
+        /// <param name="instance">Instance to insert.</param>
+        /// <returns>A SQLiteCommand which when executed will insert the instance to the database.</returns>
+        public SQLiteCommand GetInsertStatement(T instance)
+        {
+            var command = new SQLiteCommand($"INSERT INTO {Table.Name} ({string.Join(",", Table.Columns.Select(c => c.Name))}) VALUES({string.Join(",", Table.Columns.Select(c => $"@{c.Name}"))})");
+            Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
+            return command;
+        }
+
+        /// <summary>
+        /// Gets an update statement for an instance of T. This method requires that a primary key exists on the table.
+        /// </summary>
+        /// <param name="instance">Instance to update.</param>
+        /// <returns>A SQLiteCommand which when executed will update the instance in the database.</returns>
+        /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
+        public SQLiteCommand GetUpdateStatement(T instance)
+        {
+            ThrowHelper.RequirePrimaryKey(Table);
+
+            var command = new SQLiteCommand($"UPDATE {Table.Name} SET {string.Join(", ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))} WHERE {Table.PrimaryKey} = @value");
+            command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
+            Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
+            return command;
+        }
+
+        /// <summary>
+        /// Gets a delete statement for an instance of T.
+        /// </summary>
+        /// <param name="instance">Instance to delete.</param>
+        /// <returns>A SQLiteCommand which when executed will delete the instance from the database.</returns>
+        public SQLiteCommand GetDeleteStatement(T instance)
+        {
+            if (Table.PrimaryKey != null)
+            {
+                var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {Table.PrimaryKey} = @value");
+                command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
+                return command;
+            }
+            else
+            {
+                var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {string.Join(" AND ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))}");
+                Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
+                return command;
+            }
         }
     }
 }

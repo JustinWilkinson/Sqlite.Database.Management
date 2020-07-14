@@ -10,7 +10,7 @@ namespace Sqlite.Database.Management.Exceptions
     public static class ThrowHelper
     {
         /// <summary>
-        /// Throws an ArgumentNullException if the provided argument is null.
+        /// Throws an <see cref="ArgumentNullException"/> if the provided argument is null.
         /// </summary>
         /// <param name="arg">Argument to check for null.</param>
         /// <exception cref="ArgumentNullException">Thrown if arg is null</exception>
@@ -23,7 +23,7 @@ namespace Sqlite.Database.Management.Exceptions
         }
 
         /// <summary>
-        /// Throws an ArgumentNullException if the provided string is null, and an ArgumentException if it is all whitespace.
+        /// Throws an <see cref="ArgumentNullException"/> if the provided string is null, and an <see cref="ArgumentException"/>  if it is all whitespace.
         /// </summary>
         /// <param name="arg">String to check for null/whitespace.</param>
         /// <exception cref="ArgumentNullException">Thrown if arg is null</exception>
@@ -39,7 +39,7 @@ namespace Sqlite.Database.Management.Exceptions
         }
 
         /// <summary>
-        /// Throws an ArgumentNullException if the provided string is null, and an ArgumentException if it is all whitespace.
+        /// Throws an <see cref="ArgumentNullException"/> if the provided string is null, and an <see cref="ArgumentException"/> if it is all whitespace.
         /// </summary>
         /// <param name="arg">Enumerable to check if null or empty.</param>
         /// <exception cref="ArgumentNullException">Thrown if arg is null</exception>
@@ -55,7 +55,7 @@ namespace Sqlite.Database.Management.Exceptions
         }
 
         /// <summary>
-        /// Throws an InvalidOperationException if the provided object is null.
+        /// Throws an <see cref="InvalidOperationException"/> if the provided object is null.
         /// </summary>
         /// <param name="arg">Value to check for null/whitespace.</param>
         /// <param name="name">Optional, name of the invalid field/property/argument.</param>
@@ -69,7 +69,7 @@ namespace Sqlite.Database.Management.Exceptions
         }
 
         /// <summary>
-        /// Throws an InvalidOperationException if the provided string is null or whitespace.
+        /// Throws an <see cref="InvalidOperationException"/> if the provided string is null or whitespace.
         /// </summary>
         /// <param name="arg">String to check for null/whitespace.</param>
         /// <param name="name">Optional, name of the invalid field/property/argument.</param>
@@ -85,7 +85,7 @@ namespace Sqlite.Database.Management.Exceptions
         }
 
         /// <summary>
-        /// Throws an InvalidOperationException if the provided enumerable is null or empty.
+        /// Throws an <see cref="InvalidOperationException"/> if the provided enumerable is null or empty.
         /// </summary>
         /// <param name="arg">Enumerable to check if null or empty.</param>
         /// <param name="name">Optional, name of the invalid field/property/argument.</param>
@@ -101,7 +101,7 @@ namespace Sqlite.Database.Management.Exceptions
         }
 
         /// <summary>
-        /// Throws an InvalidOperationException if the provided enumerable does not have any elements matching the provided predicate.
+        /// Throws an <see cref="InvalidOperationException"/> if the provided enumerable does not have any elements matching the provided predicate.
         /// </summary>
         /// <param name="arg">Enumerable to check for elements matching predicate.</param>
         /// <param name="predicate">Predicate to check for</param>
@@ -114,6 +114,19 @@ namespace Sqlite.Database.Management.Exceptions
             if (!arg.Any(predicate))
             {
                 throw new InvalidOperationException($"{name ?? nameof(arg)} cannot be empty!");
+            }
+        }
+
+        /// <summary>
+        /// Throws a <see cref="PrimaryKeyMissingException"/> when the table does not have a primary key.
+        /// </summary>
+        /// <param name="table">Table to check for Primary Key.</param>
+        /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
+        public static void RequirePrimaryKey(Table table)
+        {
+            if (table.PrimaryKey == null)
+            {
+                throw new PrimaryKeyMissingException(table);
             }
         }
     }

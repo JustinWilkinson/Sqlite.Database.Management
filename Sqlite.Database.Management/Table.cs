@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 
@@ -54,7 +55,7 @@ namespace Sqlite.Database.Management
         /// <param name="createIfNotExists">Indicates whether the statement should include an IF NOT EXISTS clause, defaults to true.</param>
         /// <exception cref="InvalidOperationException">Thrown if Name is null or whitespace or Columns is null, empty or if the primary key specified is not any of the provided columns.</exception>
         /// <exception cref="DuplicateColumnException">Thrown if a two columns share the same name (case-insensitive)</exception>
-        public string GetCreateStatement(bool createIfNotExists = true)
+        public SQLiteCommand GetCreateStatement(bool createIfNotExists = true)
         {
             ThrowHelper.InvalidIfNullOrWhitespace(Name, "Table Name");
             ThrowHelper.InvalidIfNullOrEmpty(Columns, "Table Columns");
@@ -126,7 +127,7 @@ namespace Sqlite.Database.Management
             }
             sb.Append(")");
 
-            return sb.ToString();
+            return new SQLiteCommand(sb.ToString());
         }
     }
 }
