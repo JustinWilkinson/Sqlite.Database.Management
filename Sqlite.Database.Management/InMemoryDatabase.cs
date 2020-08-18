@@ -7,7 +7,7 @@ namespace Sqlite.Database.Management
     /// <summary>
     /// Represents an in memory database, for file persisted databases, use <see cref="Database"/>.
     /// </summary>
-    public class InMemoryDatabase : DatabaseBase
+    public class InMemoryDatabase : DatabaseBase, IDisposable
     {
         /// <summary>
         /// The master connection of the database, when this is closed the databsae will be deleted.
@@ -53,6 +53,7 @@ namespace Sqlite.Database.Management
         {
             _masterConnection = new SQLiteConnection(ConnectionString);
             _masterConnection.Open();
+            base.Create();
         }
 
         /// <summary>
@@ -66,5 +67,7 @@ namespace Sqlite.Database.Management
         /// </summary>
         /// <returns>An open connection to the database.</returns>
         public override SQLiteConnection GetOpenConnection() => IsShareable ? base.GetOpenConnection() : _masterConnection;
+
+        public void Dispose() => Delete();
     }
 }

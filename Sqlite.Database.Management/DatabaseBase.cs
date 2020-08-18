@@ -1,5 +1,4 @@
 ﻿using Sqlite.Database.Management.Exceptions;
-using Sqlite.Database.Management.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -123,6 +122,8 @@ namespace Sqlite.Database.Management
     /// </summary>
     public abstract class DatabaseBase : IDatabase
     {
+        private readonly bool _closeConnections;
+
         /// <inheritdoc/>
         public string ConnectionString { get; }
 
@@ -138,16 +139,36 @@ namespace Sqlite.Database.Management
         /// <param name="connectionString">Database connection string</param>
         /// <exception cref="ArgumentNullException">Thrown if connectionString is null</exception>
         /// <exception cref="ArgumentException">Thrown if connectionString is all whitespace</exception>
-        public DatabaseBase(string connectionString)
+        protected DatabaseBase(string connectionString)
         {
             ThrowHelper.ThrowIfArgumentNullOrWhitespace(connectionString);
             ConnectionString = connectionString;
             DataSource = new SQLiteConnectionStringBuilder(connectionString).DataSource;
             Tables = new List<Table>();
+            _closeConnections = this is Database || (this is InMemoryDatabase inMemory && inMemory.IsShareable);
         }
 
         /// <inheritdoc/>
-        public abstract void Create();
+        public virtual void Create()
+        {
+            if (Tables != null && Tables.Count > 0)
+            {
+                var tablesCreated = new HashSet<string>();
+                foreach (var table in Tables)
+                {
+                    var loweredName = table.Name.ToLower();
+                    if (!tablesCreated.Contains(loweredName))
+                    {
+                        Create(table);
+                        tablesCreated.Add(loweredName);
+                    }
+                    else
+                    {
+                        throw new DuplicateTableException(table.Name, DataSource);
+                    }
+                }
+            }
+        }
 
         /// <inheritdoc/>
         public abstract void Delete();
@@ -170,9 +191,16 @@ namespace Sqlite.Database.Management
         public void Execute(SQLiteCommand command)
         {
             ThrowHelper.ThrowIfArgumentNull(command);
-            using var connection = GetOpenConnection();
-            command.Connection = connection;
-            command.ExecuteNonQuery();
+            var connection = GetOpenConnection();
+            try
+            {
+                command.Connection = connection;
+                command.ExecuteNonQuery();
+            }
+            finally
+            {
+                CleanUp(connection);
+            }
         }
 
         /// <inheritdoc/>
@@ -184,10 +212,17 @@ namespace Sqlite.Database.Management
         public T ExecuteScalar<T>(SQLiteCommand command, Func<object, T> converter = null)
         {
             ThrowHelper.ThrowIfArgumentNull(command);
-            using var connection = GetOpenConnection();
-            command.Connection = connection;
-            var scalar = command.ExecuteScalar();
-            return converter != null ? converter(scalar) : (T)scalar;
+            var connection = GetOpenConnection();
+            try
+            {
+                command.Connection = connection;
+                var scalar = command.ExecuteScalar();
+                return converter != null ? converter(scalar) : (T)scalar;
+            }
+            finally
+            {
+                CleanUp(connection);
+            }
         }
 
         /// <inheritdoc/>
@@ -201,13 +236,19 @@ namespace Sqlite.Database.Management
         {
             ThrowHelper.ThrowIfArgumentNull(command);
             ThrowHelper.ThrowIfArgumentNull(converter);
-
-            using var connection = GetOpenConnection();
-            command.Connection = connection;
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            var connection = GetOpenConnection();
+            try
             {
-                yield return converter(reader);
+                command.Connection = connection;
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    yield return converter(reader);
+                }
+            }
+            finally
+            {
+                CleanUp(command.Connection);
             }
         }
 
@@ -216,7 +257,8 @@ namespace Sqlite.Database.Management
         public void ExecuteInTransaction(Action<SQLiteConnection> action, IsolationLevel isolationLevel = IsolationLevel.Serializable)
         {
             ThrowHelper.ThrowIfArgumentNull(action);
-            using var connection = GetOpenConnection();
+
+            var connection = GetOpenConnection();
             var transaction = connection.BeginTransaction(isolationLevel);
             try
             {
@@ -227,6 +269,10 @@ namespace Sqlite.Database.Management
             {
                 transaction.Rollback();
                 throw;
+            }
+            finally
+            {
+                CleanUp(connection);
             }
         }
 
@@ -245,6 +291,14 @@ namespace Sqlite.Database.Management
         {
             ThrowHelper.InvalidIfNull(table);
             Execute(table.GetCreateStatement(createIfNotExists));
+        }
+
+        private void CleanUp(SQLiteConnection connection)
+        {
+            if (_closeConnections)
+            {
+                connection.Dispose();
+            }
         }
     }
 }

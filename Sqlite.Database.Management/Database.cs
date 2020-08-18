@@ -1,6 +1,5 @@
 ﻿using Sqlite.Database.Management.Exceptions;
 using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 
@@ -24,35 +23,19 @@ namespace Sqlite.Database.Management
         /// <exception cref="DuplicateTableException">Thrown if more than one table of the same name is provided.</exception>
         public override void Create()
         {
-            if (!File.Exists(DataSource))
+            try
             {
-                SQLiteConnection.CreateFile(DataSource);
-            }
-
-            if (Tables != null && Tables.Count > 0)
-            {
-                var tablesCreated = new HashSet<string>();
-                foreach (var table in Tables)
+                if (!File.Exists(DataSource))
                 {
-                    try
-                    {
-                        var loweredName = table.Name.ToLower();
-                        if (!tablesCreated.Contains(loweredName))
-                        {
-                            Create(table);
-                            tablesCreated.Add(loweredName);
-                        }
-                        else
-                        {
-                            throw new DuplicateTableException(table.Name, DataSource);
-                        }
-                    }
-                    catch
-                    {
-                        File.Delete(DataSource);
-                        throw;
-                    }
+                    SQLiteConnection.CreateFile(DataSource);
                 }
+
+                base.Create();
+            }
+            catch
+            {
+                File.Delete(DataSource);
+                throw;
             }
         }
 
