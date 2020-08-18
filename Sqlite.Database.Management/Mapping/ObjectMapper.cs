@@ -85,7 +85,7 @@ namespace Sqlite.Database.Management.Mapping
         static ObjectMapper()
         {
             Type type = typeof(T);
-            Table = new Table(nameof(T)) { Columns = new List<Column>() };
+            Table = new Table(type.Name) { Columns = new List<Column>() };
 
             foreach (var property in type.GetPublicInstanceProperties())
             {

@@ -1,4 +1,6 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.SQLite;
 
 namespace Sqlite.Database.Management.Extensions
@@ -8,6 +10,8 @@ namespace Sqlite.Database.Management.Extensions
     /// </summary>
     public static class SqliteExtensions
     {
+        private static HashSet<Type> _booleanTypes = new HashSet<Type> { typeof(bool), typeof(bool?) };
+
         /// <summary>
         /// Adds a parameter to the specified command.
         /// </summary>
@@ -17,7 +21,16 @@ namespace Sqlite.Database.Management.Extensions
         /// <param name="dbType">The DbType of the parameter, defaults to DbType.String</param>
         public static void AddParameter(this SQLiteCommand command, string parameterName, object parameterValue, DbType dbType = DbType.String)
         {
-            command.Parameters.Add(new SQLiteParameter(parameterName, parameterValue) { DbType = dbType });
+            var type = parameterValue.GetType();
+            if (_booleanTypes.Contains(type))
+            {
+                var nullableBool = parameterValue as bool?;
+                command.Parameters.Add(new SQLiteParameter(parameterName, nullableBool.HasValue ? (nullableBool.Value ? 1 : 0) : new int?()) { DbType = DbType.Int32 });
+            }
+            else
+            {
+                command.Parameters.Add(new SQLiteParameter(parameterName, parameterValue) { DbType = dbType });
+            }
         }
     }
 }
