@@ -29,7 +29,16 @@ namespace Sqlite.Database.Management.Extensions
         /// <returns>A delegate that invokes the property setter.</returns>
         public static Action<T, object> GetSetter<T>(this PropertyInfo property) => GetSetDelegate<T>(property.SetMethod);
 
+        /// <summary>
+        /// Gets the getter for the specified property on the class.
+        /// </summary>
+        /// <typeparam name="T">Type of instance.</typeparam>
+        /// <param name="property">Property to obtain setter of.</param>
+        /// <returns>A delegate that invokes the property setter.</returns>
+        public static Func<T, object> GetGetter<T>(this PropertyInfo property) => GetGetDelegate<T>(property.GetMethod);
+
         #region Helpers
+        private static readonly MethodInfo _genericGetHelper = typeof(ReflectionExtensions).GetMethod(nameof(GetGetDelegateHelper), BindingFlags.Static | BindingFlags.NonPublic);
         private static readonly MethodInfo _genericSetHelper = typeof(ReflectionExtensions).GetMethod(nameof(GetSetDelegateHelper), BindingFlags.Static | BindingFlags.NonPublic);
 
         /// <summary>
@@ -71,6 +80,47 @@ namespace Sqlite.Database.Management.Extensions
         /// <param name="method">Set method</param>
         /// <returns>Typed setter</returns>
         private static Action<S, T> CreateTypedAction<S, T>(MethodInfo method) => (Action<S, T>)Delegate.CreateDelegate(typeof(Action<S, T>), method);
+
+
+        /// <summary>
+        /// Helper method that returns a getter for a property using the object class.
+        /// </summary>
+        /// <typeparam name="T">Type of instance</typeparam>
+        /// <param name="method">Method Info to pass</param>
+        /// <returns></returns>
+        private static Func<T, object> GetGetDelegate<T>(MethodInfo method)
+        {
+            // Supply the type arguments to the generic helper.
+            MethodInfo oConstructedHelper = _genericGetHelper.MakeGenericMethod(typeof(T), method.ReturnType);
+
+            // Cast the result to the right kind of delegate and return it. The null argument is because it's a static method
+            return (Func<T, object>)oConstructedHelper.Invoke(null, new[] { method });
+        }
+
+        /// <summary>
+        /// Generic helper method that creates a more weakly typed delegate that will call a strongly typed one.
+        /// </summary>
+        /// <typeparam name="TTarget">Target type</typeparam>
+        /// <typeparam name="TParam">Parameter type</typeparam>
+        /// <param name="method">Get Method</param>
+        /// <returns>A weakly typed delegate that calls a strongly type one.</returns>
+        private static Func<TTarget, object> GetGetDelegateHelper<TTarget, TParam>(MethodInfo method) where TTarget : class
+        {
+            // Convert the slow MethodInfo into a fast, strongly typed, open delegate
+            Func<TTarget, TParam> func = CreateTypedFunction<TTarget, TParam>(method);
+
+            // Now create a more weakly typed delegate which will call the strongly typed one
+            return target => (TParam)Convert.ChangeType(func(target), typeof(TParam));
+        }
+
+        /// <summary>
+        /// Creates a typed function from a method info.
+        /// </summary>
+        /// <typeparam name="S">Type of instance</typeparam>
+        /// <typeparam name="T">Type of property</typeparam>
+        /// <param name="method">Get method</param>
+        /// <returns>Typed getter</returns>
+        private static Func<S, T> CreateTypedFunction<S, T>(MethodInfo method) => (Func<S, T>)Delegate.CreateDelegate(typeof(Func<S, T>), method);
         #endregion
     }
 }

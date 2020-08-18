@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Sqlite.Database.Management.Mapping
 {
@@ -15,7 +17,33 @@ namespace Sqlite.Database.Management.Mapping
     /// <typeparam name="T">Type of object to map to.</typeparam>
     public interface IObjectMapper<T>
     {
+        /// <summary>
+        /// Creates a new record in the table corresponding to T in the database. Note that the relevant table must already exist.
+        /// </summary>
+        /// <param name="database">Database to create record in.</param>
+        /// <param name="instance">Instance to convert to record.</param>
+        public void Insert(DatabaseBase database, T instance);
 
+        /// <summary>
+        /// Updates a record in the table corresponding to the instance of T in the database note that the relevant table must already exist, have a primary key, and the primary key must be provided.
+        /// </summary>
+        /// <param name="database">Database to create record in.</param>
+        /// <param name="instance">Instance to convert to record.</param>
+        public void Update(DatabaseBase database, T instance);
+
+        /// <summary>
+        /// Deletes a record in the table corresponding to T in the database. Note that the relevant table must already exist.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="instance"></param>
+        public void Delete(DatabaseBase database, T instance);
+
+        /// <summary>
+        /// Selects records as an IEnumerable of T from the database. Note that the relevant table must already exist.
+        /// </summary>
+        /// <param name="database">Database to select from</param>
+        /// <returns>An IEnumerable of T converted from the database records.</returns>
+        public IEnumerable<T> Select(DatabaseBase database);
     }
 
     /// <summary>
@@ -26,6 +54,8 @@ namespace Sqlite.Database.Management.Mapping
     {
         #region Static Readonly
         private static readonly Dictionary<string, Func<T, object>> _getters = new Dictionary<string, Func<T, object>>();
+        private static readonly Dictionary<string, Action<T, object>> _setters = new Dictionary<string, Action<T, object>>();
+        private static readonly Func<T> _constructor;
 
         private static readonly HashSet<Type> _integerTypes = new HashSet<Type>
         {
@@ -54,12 +84,32 @@ namespace Sqlite.Database.Management.Mapping
         /// </summary>
         static ObjectMapper()
         {
-            Table table = new Table(nameof(T)) { Columns = new List<Column>() };
+            Type type = typeof(T);
+            Table = new Table(nameof(T)) { Columns = new List<Column>() };
 
-            foreach (var property in typeof(T).GetPublicInstanceProperties())
+            foreach (var property in type.GetPublicInstanceProperties())
             {
-                _getters.Add(property.Name, (Func<T, object>)Delegate.CreateDelegate(typeof(Func<T, object>), property.GetMethod));
-                table.Columns.Add(GetColumn(property));
+                _getters.Add(property.Name, property.GetGetter<T>());
+                _setters.Add(property.Name, property.GetSetter<T>());
+                Table.Columns.Add(GetColumn(property));
+            }
+
+            foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public).Where(x => !x.IsInitOnly))
+            {
+                _setters.Add(field.Name, (instance, value) => field.SetValue(instance, value));
+            }
+
+            if (type == typeof(string))
+            {
+                _constructor = Expression.Lambda<Func<T>>(Expression.Constant(string.Empty)).Compile();
+            }
+            else if (type.IsValueType || type.GetConstructor(Type.EmptyTypes) != null)
+            {
+                _constructor = Expression.Lambda<Func<T>>(Expression.New(type)).Compile();
+            }
+            else
+            {
+                _constructor = () => (T)FormatterServices.GetUninitializedObject(type);
             }
         }
 
@@ -121,53 +171,64 @@ namespace Sqlite.Database.Management.Mapping
             return new Column(property.Name);
         }
 
-        /// <summary>
-        /// Gets an insert statement for an instance of T.
-        /// </summary>
-        /// <param name="instance">Instance to insert.</param>
-        /// <returns>A SQLiteCommand which when executed will insert the instance to the database.</returns>
-        public SQLiteCommand GetInsertStatement(T instance)
+        /// <inheritdoc/>
+        public void Insert(DatabaseBase database, T instance)
         {
             var command = new SQLiteCommand($"INSERT INTO {Table.Name} ({string.Join(",", Table.Columns.Select(c => c.Name))}) VALUES({string.Join(",", Table.Columns.Select(c => $"@{c.Name}"))})");
             Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
-            return command;
+            database.Execute(command);
         }
 
-        /// <summary>
-        /// Gets an update statement for an instance of T. This method requires that a primary key exists on the table.
-        /// </summary>
-        /// <param name="instance">Instance to update.</param>
-        /// <returns>A SQLiteCommand which when executed will update the instance in the database.</returns>
+        /// <inheritdoc/>
         /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
-        public SQLiteCommand GetUpdateStatement(T instance)
+        public void Update(DatabaseBase database, T instance)
         {
             ThrowHelper.RequirePrimaryKey(Table);
 
             var command = new SQLiteCommand($"UPDATE {Table.Name} SET {string.Join(", ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))} WHERE {Table.PrimaryKey} = @value");
             command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
             Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
-            return command;
+            database.Execute(command);
         }
 
-        /// <summary>
-        /// Gets a delete statement for an instance of T.
-        /// </summary>
-        /// <param name="instance">Instance to delete.</param>
-        /// <returns>A SQLiteCommand which when executed will delete the instance from the database.</returns>
-        public SQLiteCommand GetDeleteStatement(T instance)
+        /// <inheritdoc/>
+        public void Delete(DatabaseBase database, T instance)
         {
             if (Table.PrimaryKey != null)
             {
                 var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {Table.PrimaryKey} = @value");
                 command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
-                return command;
+                database.Execute(command);
             }
             else
             {
                 var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {string.Join(" AND ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))}");
                 Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
-                return command;
+                database.Execute(command);
             }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<T> Select(DatabaseBase database) => database.Execute(new SQLiteCommand($"SELECT * FROM {Table.Name}"), reader => Map(reader));
+
+        /// <summary>
+        /// Maps a SQLiteDataReader to an object of type T.
+        /// </summary>
+        /// <param name="reader">SQLiteDataReader to populate object from.</param>
+        /// <returns>A new instance of type T populated from the SQLiteDataReader.</returns>
+        public T Map(SQLiteDataReader reader)
+        {
+            var instance = _constructor();
+
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                if (_setters.TryGetValue(reader.GetName(i), out var setter))
+                {
+                    setter(instance, reader[i]);
+                }
+            }
+
+            return instance;
         }
     }
 }
