@@ -6,19 +6,28 @@ namespace Sqlite.Database.Management.Test
 {
     public class ObjectMapperTest
     {
+        private readonly DatabaseBase _database;
+        private readonly ObjectMapper<TestObject> _mapper;
+
+        public ObjectMapperTest()
+        {
+            _mapper = new ObjectMapper<TestObject>();
+            var table = ObjectMapper<TestObject>.Table;
+            table.PrimaryKey = "IntProperty";
+            _database = new InMemoryDatabase();
+            _database.Tables.Add(table);
+            _database.Create();
+        }
+
         [Fact]
         public void Map_MapsSqliteDataReaderToObject_Successful()
         {
             // Arrange
             var mapper = new ObjectMapper<TestObject>();
-            using var database = new InMemoryDatabase();
-            database.Create();
-
-            database.Execute("CREATE TABLE Table1 (StringProperty TEXT, IntProperty INTEGER, BoolProperty INTEGER)");
-            database.Execute("INSERT INTO Table1 VALUES('Value 1', 1, 1)");
+            _database.Execute("INSERT INTO TestObject VALUES('Value 1', 1, 1)");
 
             // Act
-            using var reader = new SQLiteCommand("SELECT * FROM Table1", database.GetOpenConnection()).ExecuteReader();
+            using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
             reader.Read();
             var result = mapper.Map(reader);
 
@@ -36,20 +45,51 @@ namespace Sqlite.Database.Management.Test
         {
             // Arrange
             var recordToInsert = new TestObject { StringProperty = "Hello", IntProperty = 7, BoolProperty = false };
-            var mapper = new ObjectMapper<TestObject>();
-            using var database = new InMemoryDatabase();
-            database.Tables.Add(ObjectMapper<TestObject>.Table);
-            database.Create();
 
             // Act
-            mapper.Insert(database, recordToInsert);
+            _mapper.Insert(_database, recordToInsert);
 
             // Assert
-            using var reader = new SQLiteCommand("SELECT * FROM TestObject", database.GetOpenConnection()).ExecuteReader();
+            using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
             reader.Read();
             Assert.Equal(recordToInsert.StringProperty, (string)reader["StringProperty"]);
             Assert.Equal(recordToInsert.IntProperty, (int)(long)reader["IntProperty"]);
             Assert.Equal(recordToInsert.BoolProperty, (long)reader["BoolProperty"] == 1);
+        }
+
+        [Fact]
+        public void Update_UpdatesObjectWithValues_Successful()
+        {
+            // Arrange
+            var updatedRecord = new TestObject { StringProperty = "New Value", IntProperty = 1, BoolProperty = true };
+
+
+            _database.Execute("INSERT INTO TestObject VALUES('Value 1', 1, 1)");
+
+            // Act
+            _mapper.Update(_database, updatedRecord);
+
+            // Assert
+            using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
+            reader.Read();
+            Assert.Equal(updatedRecord.StringProperty, (string)reader["StringProperty"]);
+            Assert.Equal(updatedRecord.IntProperty, (int)(long)reader["IntProperty"]);
+            Assert.Equal(updatedRecord.BoolProperty, (long)reader["BoolProperty"] == 1);
+        }
+
+        [Fact]
+        public void Delete_DeletesObjectWithValues_Successful()
+        {
+            // Arrange
+            var recordToDelete = new TestObject { StringProperty = "Value 1", IntProperty = 1, BoolProperty = true };
+            _database.Execute("INSERT INTO TestObject VALUES('Value 1', 1, 1)");
+
+            // Act
+            _mapper.Delete(_database, recordToDelete);
+
+            // Assert
+            var result = new SQLiteCommand("SELECT COUNT(*) FROM TestObject", _database.GetOpenConnection()).ExecuteScalar();
+            Assert.Equal(0L, result);
         }
     }
 }
