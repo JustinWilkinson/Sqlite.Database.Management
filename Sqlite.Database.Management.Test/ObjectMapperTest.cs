@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Sqlite.Database.Management.Test
 {
-    public class RowMapperTest
+    public class ObjectMapperTest
     {
         private readonly string _connectionString = new SQLiteConnectionStringBuilder { DataSource = ":memory:" }.ToString();
 
@@ -12,7 +12,7 @@ namespace Sqlite.Database.Management.Test
         public void Map_MapsSqliteDataReaderToObject_Successful()
         {
             // Arrange
-            var mapper = new RowMapper<TestObject>();
+            var mapper = new ObjectMapper<TestObject>();
             using var connection = new SQLiteConnection(_connectionString);
             connection.Open();
 

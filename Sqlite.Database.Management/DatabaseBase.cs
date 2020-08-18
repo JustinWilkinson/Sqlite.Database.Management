@@ -1,4 +1,5 @@
 ﻿using Sqlite.Database.Management.Exceptions;
+using Sqlite.Database.Management.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Data;
