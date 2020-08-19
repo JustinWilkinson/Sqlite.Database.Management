@@ -1,5 +1,4 @@
-﻿using Sqlite.Database.Management.Mapping;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 using System.Linq;
 using Xunit;
 

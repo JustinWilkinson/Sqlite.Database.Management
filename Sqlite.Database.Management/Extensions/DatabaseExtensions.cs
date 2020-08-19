@@ -1,5 +1,4 @@
-﻿using Sqlite.Database.Management.Mapping;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Sqlite.Database.Management.Extensions

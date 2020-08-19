@@ -14,7 +14,7 @@ namespace Sqlite.Database.Management
         /// <summary>
         /// Internal list of databases.
         /// </summary>
-        private readonly Dictionary<string, Database> _databases;
+        private readonly Dictionary<string, Database> _databases = new Dictionary<string, Database>();
 
         /// <summary>
         /// Instantiates and creates a new DatabaseCollection with the (distinct) connectionStrings and tables.
