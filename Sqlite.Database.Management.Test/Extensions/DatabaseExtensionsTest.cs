@@ -1,42 +1,30 @@
-﻿using Sqlite.Database.Management.Mapping;
+﻿using Sqlite.Database.Management.Enumerations;
+using Sqlite.Database.Management.Extensions;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
 using Xunit;
 
-namespace Sqlite.Database.Management.Test
+namespace Sqlite.Database.Management.Test.Extensions
 {
-    public class ObjectMapperTest
+    public class DatabaseExtensionsTest
     {
         private readonly DatabaseBase _database;
-        private readonly ObjectMapper<TestObject> _mapper;
 
-        public ObjectMapperTest()
+        public DatabaseExtensionsTest()
         {
-            _mapper = new ObjectMapper<TestObject>();
-            var table = ObjectMapper<TestObject>.Table;
-            table.PrimaryKey = "IntProperty";
             _database = new InMemoryDatabase();
-            _database.Tables.Add(table);
+            _database.Tables.Add(new Table("TestObject") 
+            { 
+                PrimaryKey = "IntProperty",
+                Columns = new List<Column>
+                {
+                    new Column("StringProperty"),
+                    new Column("IntProperty", ColumnType.Integer) { Nullable = false },
+                    new Column("BoolProperty", ColumnType.Integer) { Nullable = false, CheckExpression = "IN (0, 1)" }
+                }
+            });
             _database.Create();
-        }
-
-        [Fact]
-        public void Map_MapsSqliteDataReaderToObject_Successful()
-        {
-            // Arrange
-            _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1)");
-
-            // Act
-            using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
-            reader.Read();
-            var result = _mapper.Map(reader);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.IsType<TestObject>(result);
-            Assert.Equal("Value 1", result.StringProperty);
-            Assert.Equal(1, result.IntProperty);
-            Assert.True(result.BoolProperty);
         }
 
         [Fact]
@@ -46,7 +34,7 @@ namespace Sqlite.Database.Management.Test
             var recordToInsert = new TestObject { StringProperty = "Hello", IntProperty = 7, BoolProperty = false };
 
             // Act
-            _mapper.Insert(_database, recordToInsert);
+            _database.Insert(recordToInsert);
 
             // Assert
             using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
@@ -64,7 +52,7 @@ namespace Sqlite.Database.Management.Test
             _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1)");
 
             // Act
-            _mapper.Update(_database, updatedRecord);
+            _database.Update(updatedRecord);
 
             // Assert
             using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
@@ -82,7 +70,7 @@ namespace Sqlite.Database.Management.Test
             _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1),('Value 2', 2, 1)");
 
             // Act
-            _mapper.Delete(_database, recordToDelete);
+            _database.Delete(recordToDelete);
 
             // Assert
             var result = new SQLiteCommand("SELECT COUNT(*) FROM TestObject", _database.GetOpenConnection()).ExecuteScalar();
@@ -96,7 +84,7 @@ namespace Sqlite.Database.Management.Test
             _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1),('Value 2', 2, 0)");
 
             // Act
-            var results = _mapper.Select(_database).ToList();
+            var results = _database.Select<TestObject>().ToList();
 
             // Assert
             Assert.NotNull(results);
