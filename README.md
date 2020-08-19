@@ -121,7 +121,7 @@ var demo = new Demo { IntProperty = 1, StringProperty = "Hi", BoolProperty = fal
 // Insert a new record.
 database.Insert("Hi");
 
-// Update an existing record (note that this method requires a PrimaryKey to be specified.)
+// Update an existing record (note that this method requires a PrimaryKey to be specified).
 demo.StringProperty = "Hello";
 database.Update(demo);
 
@@ -135,7 +135,7 @@ database.Delete(demo);
 ### Database Collections:
 * Sqlite.Database.Management also supports managing collections of databases.
 ```C#
-var connectionStrings = new List<string> { "Data Source=Database1.sqlite;", "Data Source=Database2.sqlite;" , "Data Source=Database3.sqlite;"  }
+var connectionStrings = new List<string> { "Data Source=Database1.sqlite;", "Data Source=Database2.sqlite;" , "Data Source=Database3.sqlite;"  };
 var tables = new List<Table> { ObjectMapper<Demo>.Table };
 var databases = new DatabaseCollection(connectionStrings, tables); // This will create all three databases and the specified tables in them.
 
