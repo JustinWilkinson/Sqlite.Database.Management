@@ -15,45 +15,45 @@ namespace Sqlite.Database.Management
         /// <summary>
         /// Gets the database connection string.
         /// </summary>
-        public string ConnectionString { get; }
+        string ConnectionString { get; }
 
         /// <summary>
         /// Gets the Data Source for the database.
         /// </summary>
-        public string DataSource { get; }
+        string DataSource { get; }
 
         /// <summary>
         /// Gets or sets the collection of tables in the database.
         /// </summary>
-        public ICollection<Table> Tables { get; set; }
+        ICollection<Table> Tables { get; set; }
 
         /// <summary>
         /// Creates the database. Should also creates any tables in the Tables collection at this time.
         /// </summary>
-        public void Create();
+        void Create();
 
         /// <summary>
         /// Deletes the database.
         /// </summary>
-        public void Delete();
+        void Delete();
 
         /// <summary>
         /// Gets a new SQLiteConnection and opens it.
         /// </summary>
         /// <returns>An open SQLiteConnection to the database.</returns>
-        public SQLiteConnection GetOpenConnection();
+        SQLiteConnection GetOpenConnection();
 
         /// <summary>
         /// Creates a SQLiteCommand from the provided string and executes it using a new connection.
         /// </summary>
         /// <param name="commandString">Command text to execute</param>
-        public void Execute(string commandString);
+        void Execute(string commandString);
 
         /// <summary>
         /// Executes the provided command using a new connection.
         /// </summary>
         /// <param name="command">Command to execute</param>
-        public void Execute(SQLiteCommand command);
+        void Execute(SQLiteCommand command);
 
         /// <summary>
         /// Creates a SQLiteCommand from the provided string and executes it using a new connection, returning a scalar value using the specified converter.
@@ -62,7 +62,7 @@ namespace Sqlite.Database.Management
         /// <param name="commandString">Command text to execute</param>
         /// <param name="converter">Conversion method for returned value</param>
         /// <returns>An instance of T created by converting the returned value with the specified converter.</returns>
-        public T ExecuteScalar<T>(string commandString, Func<object, T> converter = null);
+        T ExecuteScalar<T>(string commandString, Func<object, T> converter = null);
 
         /// <summary>
         /// Executes the provided SQLiteCommand using a new connection, returning a scalar value using the specified converter.
@@ -71,7 +71,7 @@ namespace Sqlite.Database.Management
         /// <param name="command">Command text to execute</param>
         /// <param name="converter">Conversion method for returned value</param>
         /// <returns>An instance of T created by converting the returned value with the specified converter.</returns>
-        public T ExecuteScalar<T>(SQLiteCommand command, Func<object, T> converter = null);
+        T ExecuteScalar<T>(SQLiteCommand command, Func<object, T> converter = null);
 
         /// <summary>
         /// Creates a SQLiteCommand from the provided string and executes it using a new connection, returning an IEnumerable of T generated from each row in the result set using the specified converter.
@@ -80,7 +80,7 @@ namespace Sqlite.Database.Management
         /// <param name="commandString">Command text to execute</param>
         /// <param name="converter">Conversion method for rows</param>
         /// <returns>An IEnumerable of T created by converting the returned rows to T using the specified converter.</returns>
-        public IEnumerable<T> Execute<T>(string commandString, Func<SQLiteDataReader, T> converter);
+        IEnumerable<T> Execute<T>(string commandString, Func<SQLiteDataReader, T> converter);
 
         /// <summary>
         /// Executes the provided SQLiteCommand using a new connection, returning an IEnumerable of T generated from each row in the result set using the specified converter.
@@ -89,7 +89,7 @@ namespace Sqlite.Database.Management
         /// <param name="command">Command to execute</param>
         /// <param name="converter">Conversion method for rows</param>
         /// <returns>An IEnumerable of T created by converting the returned rows to T using the specified converter.</returns>
-        public IEnumerable<T> Execute<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter);
+        IEnumerable<T> Execute<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter);
 
         /// <summary>
         /// Wraps an action in a transaction which is committed on success, or rolled back on error - note that no additional connections should be opened within this to prevent deadlocks.
@@ -97,7 +97,7 @@ namespace Sqlite.Database.Management
         /// </summary>
         /// <param name="action">Action to run in transaction.</param>
         /// <param name="isolationLevel">Isolation Level of the transaction, defaults to Serializable.</param>
-        public void ExecuteInTransaction(Action<SQLiteConnection> action, IsolationLevel isolationLevel = IsolationLevel.Serializable);
+        void ExecuteInTransaction(Action<SQLiteConnection> action, IsolationLevel isolationLevel = IsolationLevel.Serializable);
 
         /// <summary>
         /// Retrieves the value from the named column, and converts it to an instance of T using the specified function.
@@ -106,14 +106,14 @@ namespace Sqlite.Database.Management
         /// <param name="columnName">Name of the column</param>
         /// <param name="converter">Conversion function, uses basic cast if null or not provided.</param>
         /// <returns>Value from named column as type T</returns>
-        public Func<SQLiteDataReader, T> GetColumnValue<T>(string columnName, Func<object, T> converter = null);
+        Func<SQLiteDataReader, T> GetColumnValue<T>(string columnName, Func<object, T> converter = null);
 
         /// <summary>
         /// Creates a table in the database.
         /// </summary>
         /// <param name="table">Table to create.</param>
         /// <param name="createIfNotExists">Include an IF NOT EXISTS clause in the create statement, defults to true.</param>
-        public void Create(Table table, bool createIfNotExists = true);
+        void Create(Table table, bool createIfNotExists = true);
     }
 
     /// <summary>
@@ -240,10 +240,12 @@ namespace Sqlite.Database.Management
             try
             {
                 command.Connection = connection;
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
+                using (var reader = command.ExecuteReader())
                 {
-                    yield return converter(reader);
+                    while (reader.Read())
+                    {
+                        yield return converter(reader);
+                    }
                 }
             }
             finally

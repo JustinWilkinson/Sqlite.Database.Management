@@ -9,7 +9,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 
-namespace Sqlite.Database.Management.Mapping
+namespace Sqlite.Database.Management
 {
     /// <summary>
     /// Maps an object of type T to a SQLite table.
@@ -22,28 +22,28 @@ namespace Sqlite.Database.Management.Mapping
         /// </summary>
         /// <param name="database">Database to create record in.</param>
         /// <param name="instance">Instance to convert to record.</param>
-        public void Insert(DatabaseBase database, T instance);
+        void Insert(DatabaseBase database, T instance);
 
         /// <summary>
         /// Updates a record in the table corresponding to the instance of T in the database note that the relevant table must already exist, have a primary key, and the primary key must be provided.
         /// </summary>
         /// <param name="database">Database to create record in.</param>
         /// <param name="instance">Instance to convert to record.</param>
-        public void Update(DatabaseBase database, T instance);
+        void Update(DatabaseBase database, T instance);
 
         /// <summary>
         /// Deletes a record in the table corresponding to T in the database. Note that the relevant table must already exist.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="instance"></param>
-        public void Delete(DatabaseBase database, T instance);
+        void Delete(DatabaseBase database, T instance);
 
         /// <summary>
         /// Selects records as an IEnumerable of T from the database. Note that the relevant table must already exist.
         /// </summary>
         /// <param name="database">Database to select from</param>
         /// <returns>An IEnumerable of T converted from the database records.</returns>
-        public IEnumerable<T> Select(DatabaseBase database);
+        IEnumerable<T> Select(DatabaseBase database);
     }
 
     /// <summary>
