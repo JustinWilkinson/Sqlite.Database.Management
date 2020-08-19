@@ -10,7 +10,7 @@ namespace Sqlite.Database.Management.Extensions
     /// </summary>
     public static class SqliteExtensions
     {
-        private static HashSet<Type> _booleanTypes = new HashSet<Type> { typeof(bool), typeof(bool?) };
+        private static readonly HashSet<Type> _booleanTypes = new HashSet<Type> { typeof(bool), typeof(bool?) };
 
         /// <summary>
         /// Adds a parameter to the specified command.

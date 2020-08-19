@@ -1,5 +1,6 @@
 # Sqlite.Database.Management
 A lightweight SQLite specific ORM and management library.
+This library is primarily a self-learning project, but is licensed under the [MIT License](https://github.com/JustinWilkinson/Sqlite.Database.Management/blob/master/LICENSE) if you'd like to utilise it.
 
 ## Project Structure:
 ### Sqlite.Database.Management
