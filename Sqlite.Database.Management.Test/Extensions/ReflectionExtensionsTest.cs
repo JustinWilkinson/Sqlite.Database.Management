@@ -1,5 +1,4 @@
 ﻿using Sqlite.Database.Management.Extensions;
-using System;
 using Xunit;
 
 namespace Sqlite.Database.Management.Test.Extensions

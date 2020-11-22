@@ -14,8 +14,8 @@ namespace Sqlite.Database.Management.Test.Extensions
         public DatabaseExtensionsTest()
         {
             _database = new InMemoryDatabase();
-            _database.Tables.Add(new Table("TestObject") 
-            { 
+            _database.Tables.Add(new Table("TestObject")
+            {
                 PrimaryKey = "IntProperty",
                 Columns = new List<Column>
                 {

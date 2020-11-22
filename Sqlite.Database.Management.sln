@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sqlite.Database.Management", "Sqlite.Database.Management\Sqlite.Database.Management.csproj", "{6251942A-33D2-42F4-91C0-EFECF7A11BB6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sqlite.Database.Management.Test", "Sqlite.Database.Management.Test\Sqlite.Database.Management.Test.csproj", "{2DE0DA90-3CF2-476D-ADFD-3CCBBBD052F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sqlite.Database.Management.Test", "Sqlite.Database.Management.Test\Sqlite.Database.Management.Test.csproj", "{2DE0DA90-3CF2-476D-ADFD-3CCBBBD052F6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A6594873-701B-4799-90F1-20EFC14FCC07}"
 	ProjectSection(SolutionItems) = preProject

@@ -113,7 +113,7 @@ To use these, you will need to add the following statement to your file `using S
 ```C#
 var database = new Database("Data Source=MyDatabase.sqlite;");
 var table = ObjectMapper<Demo>.Table;
-table.PrimaryKey = "IntProperty" // This is required for the Update Method.
+table.PrimaryKey = "IntProperty"; // This is required for the Update Method.
 database.Tables.Add(table);
 database.Create();
 

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-
-namespace Sqlite.Database.Management.Enumerations
+﻿namespace Sqlite.Database.Management.Enumerations
 {
     /// <summary>
     /// Enumeration of the SQLite column data types.
