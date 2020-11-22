@@ -72,7 +72,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nColumn1 TEXT,\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}Column1 TEXT,{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement(false);
 
             // Assert
-            Assert.Equal("CREATE TABLE Test\r\n(\r\nColumn1 TEXT,\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE Test{Environment.NewLine}({Environment.NewLine}Column1 TEXT,{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -113,7 +113,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nColumn1 TEXT PRIMARY KEY,\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}Column1 TEXT PRIMARY KEY,{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nId INTEGER PRIMARY KEY,\r\nColumn1 TEXT,\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}Id INTEGER PRIMARY KEY,{Environment.NewLine}Column1 TEXT,{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nTestId INTEGER PRIMARY KEY,\r\nColumn1 TEXT,\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}TestId INTEGER PRIMARY KEY,{Environment.NewLine}Column1 TEXT,{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -175,7 +175,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nColumn1 TEXT NOT NULL,\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}Column1 TEXT NOT NULL,{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -195,7 +195,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nColumn1 TEXT DEFAULT 'DefaultString',\r\nColumn2 INTEGER\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}Column1 TEXT DEFAULT 'DefaultString',{Environment.NewLine}Column2 INTEGER{Environment.NewLine})", result.CommandText);
         }
 
         [Fact]
@@ -215,7 +215,7 @@ namespace Sqlite.Database.Management.Test
             var result = table.GetCreateStatement();
 
             // Assert
-            Assert.Equal("CREATE TABLE IF NOT EXISTS Test\r\n(\r\nColumn1 TEXT,\r\nColumn2 INTEGER CHECK(Column2 IN (0,1))\r\n)", result.CommandText);
+            Assert.Equal($"CREATE TABLE IF NOT EXISTS Test{Environment.NewLine}({Environment.NewLine}Column1 TEXT,{Environment.NewLine}Column2 INTEGER CHECK(Column2 IN (0,1)){Environment.NewLine})", result.CommandText);
         }
     }
 }
