@@ -69,7 +69,7 @@ namespace Sqlite.Database.Management
             var pkFound = false;
 
             var sb = new StringBuilder();
-            sb.AppendLine($"CREATE TABLE{(createIfNotExists ? " IF NOT EXISTS" : "")} {Name}\r\n(");
+            sb.AppendLine($"CREATE TABLE{(createIfNotExists ? " IF NOT EXISTS" : "")} {Name}{Environment.NewLine}(");
             foreach ((Column column, int index) in Columns.Select((column, index) => (column, index)))
             {
                 var loweredName = column.Name.ToLower();
