@@ -124,7 +124,7 @@ namespace Sqlite.Database.Management.Exceptions
         /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
         public static void RequirePrimaryKey(Table table)
         {
-            if (table.PrimaryKey == null)
+            if (table.PrimaryKey is null)
             {
                 throw new PrimaryKeyMissingException(table);
             }

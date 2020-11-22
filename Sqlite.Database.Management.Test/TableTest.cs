@@ -26,14 +26,14 @@ namespace Sqlite.Database.Management.Test
         [Fact]
         public void GetCreateStatement_EmptyColumns_ThrowsInvalidOperationException()
         {
-            Assert.Throws<InvalidOperationException>(() => new Table("Test"){ Columns = new List<Column>() }.GetCreateStatement());
+            Assert.Throws<InvalidOperationException>(() => new Table("Test") { Columns = new List<Column>() }.GetCreateStatement());
         }
 
         [Fact]
         public void GetCreateStatement_PrimaryKeyNotInColumns_ThrowsInvalidOperationException()
         {
-            Assert.Throws<InvalidOperationException>(() => new Table("Test") 
-            { 
+            Assert.Throws<InvalidOperationException>(() => new Table("Test")
+            {
                 Columns = new List<Column>()
                 {
                     new Column("Column1")
