@@ -1,10 +1,11 @@
-﻿using System.Data.SQLite;
+﻿using System;
+using System.Data.SQLite;
 using System.Linq;
 using Xunit;
 
 namespace Sqlite.Database.Management.Test
 {
-    public class ObjectMapperTest
+    public class ObjectMapperTest : IDisposable
     {
         private readonly DatabaseBase _database;
         private readonly ObjectMapper<TestObject> _mapper;
@@ -106,6 +107,12 @@ namespace Sqlite.Database.Management.Test
             Assert.Equal("Value 2", results[1].StringProperty);
             Assert.Equal(2, results[1].IntProperty);
             Assert.False(results[1].BoolProperty);
+        }
+
+        public void Dispose()
+        {
+            _database.Delete();
+            GC.SuppressFinalize(this);
         }
     }
 }
