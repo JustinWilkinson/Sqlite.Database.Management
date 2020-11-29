@@ -125,7 +125,7 @@ namespace Sqlite.Database.Management
 
                 sb.AppendLine(index < Columns.Count - 1 ? "," : "");
             }
-            sb.Append(")");
+            sb.Append(')');
 
             return new SQLiteCommand(sb.ToString());
         }
