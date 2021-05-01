@@ -10,12 +10,12 @@
     <Description>A lightweight SQLite specific ORM and management library.</Description>
     <Copyright>Justin Wilkinson 2020</Copyright>
     <RepositoryUrl>https://github.com/JustinWilkinson/Sqlite.Database.Management</RepositoryUrl>
-    <Version>0.2.1</Version>
+    <Version>0.3.1</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.113.6" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.113.7" />
   </ItemGroup>
 
   <ItemGroup>

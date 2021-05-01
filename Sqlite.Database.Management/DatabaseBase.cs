@@ -151,7 +151,7 @@ namespace Sqlite.Database.Management
         /// <inheritdoc/>
         public virtual void Create()
         {
-            if (Tables != null && Tables.Count > 0)
+            if (Tables is not null && Tables.Count > 0)
             {
                 var tablesCreated = new HashSet<string>();
                 foreach (var table in Tables)
@@ -217,7 +217,7 @@ namespace Sqlite.Database.Management
             {
                 command.Connection = connection;
                 var scalar = command.ExecuteScalar();
-                return converter != null ? converter(scalar) : (T)scalar;
+                return converter is not null ? converter(scalar) : (T)scalar;
             }
             finally
             {
@@ -240,12 +240,10 @@ namespace Sqlite.Database.Management
             try
             {
                 command.Connection = connection;
-                using (var reader = command.ExecuteReader())
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    while (reader.Read())
-                    {
-                        yield return converter(reader);
-                    }
+                    yield return converter(reader);
                 }
             }
             finally
@@ -284,7 +282,7 @@ namespace Sqlite.Database.Management
         public Func<SQLiteDataReader, T> GetColumnValue<T>(string columnName, Func<object, T> converter = null)
         {
             ThrowHelper.ThrowIfArgumentNullOrWhitespace(columnName);
-            return reader => converter != null ? converter(reader[columnName]) : (T)reader[columnName];
+            return reader => converter is not null ? converter(reader[columnName]) : (T)reader[columnName];
         }
 
         /// <inheritdoc/>

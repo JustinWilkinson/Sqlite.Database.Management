@@ -24,7 +24,7 @@ namespace Sqlite.Database.Management.Test
         public void Map_MapsSqliteDataReaderToObject_Successful()
         {
             // Arrange
-            _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1)");
+            _database.Execute("INSERT INTO TestObject (StringProperty, IntProperty, BoolProperty) VALUES ('Value 1', 1, 1)");
 
             // Act
             using var reader = new SQLiteCommand("SELECT * FROM TestObject", _database.GetOpenConnection()).ExecuteReader();
@@ -61,7 +61,7 @@ namespace Sqlite.Database.Management.Test
         {
             // Arrange
             var updatedRecord = new TestObject { StringProperty = "New Value", IntProperty = 1, BoolProperty = true };
-            _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1)");
+            _database.Execute("INSERT INTO TestObject (StringProperty, IntProperty, BoolProperty) VALUES ('Value 1', 1, 1)");
 
             // Act
             _mapper.Update(_database, updatedRecord);
@@ -79,7 +79,7 @@ namespace Sqlite.Database.Management.Test
         {
             // Arrange
             var recordToDelete = new TestObject { StringProperty = "Value 1", IntProperty = 1, BoolProperty = true };
-            _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1),('Value 2', 2, 1)");
+            _database.Execute("INSERT INTO TestObject (StringProperty, IntProperty, BoolProperty) VALUES ('Value 1', 1, 1),('Value 2', 2, 1)");
 
             // Act
             _mapper.Delete(_database, recordToDelete);
@@ -93,7 +93,7 @@ namespace Sqlite.Database.Management.Test
         public void Select_SelectsObjectsAndConverts_Successful()
         {
             // Arrange
-            _database.Execute("INSERT INTO TestObject VALUES ('Value 1', 1, 1),('Value 2', 2, 0)");
+            _database.Execute("INSERT INTO TestObject (StringProperty, IntProperty, BoolProperty) VALUES ('Value 1', 1, 1),('Value 2', 2, 0)");
 
             // Act
             var results = _mapper.Select(_database).ToList();

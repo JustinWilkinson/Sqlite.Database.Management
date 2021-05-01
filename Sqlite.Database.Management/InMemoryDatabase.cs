@@ -68,6 +68,10 @@ namespace Sqlite.Database.Management
         /// <returns>An open connection to the database.</returns>
         public override SQLiteConnection GetOpenConnection() => IsShareable ? base.GetOpenConnection() : _masterConnection;
 
-        public void Dispose() => Delete();
+        public void Dispose()
+        {
+            Delete();
+            GC.SuppressFinalize(this);
+        }
     }
 }

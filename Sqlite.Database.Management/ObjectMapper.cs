@@ -53,11 +53,11 @@ namespace Sqlite.Database.Management
     public class ObjectMapper<T> : IObjectMapper<T>
     {
         #region Static Readonly
-        private static readonly Dictionary<string, Func<T, object>> _getters = new Dictionary<string, Func<T, object>>();
-        private static readonly Dictionary<string, Action<T, object>> _setters = new Dictionary<string, Action<T, object>>();
+        private static readonly Dictionary<string, Func<T, object>> _getters = new();
+        private static readonly Dictionary<string, Action<T, object>> _setters = new();
         private static readonly Func<T> _constructor;
 
-        private static readonly HashSet<Type> _integerTypes = new HashSet<Type>
+        private static readonly HashSet<Type> _integerTypes = new()
         {
             typeof(byte),
             typeof(sbyte),
@@ -69,7 +69,7 @@ namespace Sqlite.Database.Management
             typeof(ulong)
         };
 
-        private static readonly HashSet<Type> _realTypes = new HashSet<Type>
+        private static readonly HashSet<Type> _realTypes = new()
         {
             typeof(float),
             typeof(double),
@@ -103,7 +103,7 @@ namespace Sqlite.Database.Management
             {
                 _constructor = Expression.Lambda<Func<T>>(Expression.Constant(string.Empty)).Compile();
             }
-            else if (type.IsValueType || type.GetConstructor(Type.EmptyTypes) != null)
+            else if (type.IsValueType || type.GetConstructor(Type.EmptyTypes) is not null)
             {
                 _constructor = Expression.Lambda<Func<T>>(Expression.New(type)).Compile();
             }
@@ -123,7 +123,7 @@ namespace Sqlite.Database.Management
             var type = property.PropertyType;
             var name = property.Name;
 
-            if (Table.PrimaryKey == null && (name.Equals("Id", StringComparison.OrdinalIgnoreCase) || name.Equals($"{Table.Name}Id", StringComparison.OrdinalIgnoreCase)))
+            if (Table.PrimaryKey is null && (name.Equals("Id", StringComparison.OrdinalIgnoreCase) || name.Equals($"{Table.Name}Id", StringComparison.OrdinalIgnoreCase)))
             {
                 Table.PrimaryKey = name;
             }
@@ -146,7 +146,7 @@ namespace Sqlite.Database.Management
             else
             {
                 var underlyingType = Nullable.GetUnderlyingType(type);
-                if (underlyingType != null)
+                if (underlyingType is not null)
                 {
                     if (_integerTypes.Contains(underlyingType))
                     {
@@ -194,7 +194,7 @@ namespace Sqlite.Database.Management
         /// <inheritdoc/>
         public void Delete(DatabaseBase database, T instance)
         {
-            if (Table.PrimaryKey != null)
+            if (Table.PrimaryKey is not null)
             {
                 var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {Table.PrimaryKey} = @value");
                 command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
