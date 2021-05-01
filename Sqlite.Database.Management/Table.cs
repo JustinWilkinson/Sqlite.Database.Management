@@ -60,7 +60,7 @@ namespace Sqlite.Database.Management
             ThrowHelper.InvalidIfNullOrWhitespace(Name, "Table Name");
             ThrowHelper.InvalidIfNullOrEmpty(Columns, "Table Columns");
 
-            if (PrimaryKey != null)
+            if (PrimaryKey is not null)
             {
                 ThrowHelper.InvalidIfNotAny(Columns, c => c.Name == PrimaryKey, "Table Columns");
             }
@@ -86,7 +86,7 @@ namespace Sqlite.Database.Management
 
                 if (!pkFound)
                 {
-                    if (PrimaryKey != null)
+                    if (PrimaryKey is not null)
                     {
                         if (column.Name.Equals(PrimaryKey, StringComparison.OrdinalIgnoreCase))
                         {
@@ -113,12 +113,12 @@ namespace Sqlite.Database.Management
                     sb.Append(" NOT NULL");
                 }
 
-                if (column.Default != null)
+                if (column.Default is not null)
                 {
                     sb.Append($" DEFAULT {column.Default}");
                 }
 
-                if (column.CheckExpression != null)
+                if (column.CheckExpression is not null)
                 {
                     sb.Append($" CHECK({column.Name} {column.CheckExpression})");
                 }

@@ -8,7 +8,7 @@ namespace Sqlite.Database.Management.Extensions
     /// </summary>
     public static class DatabaseExtensions
     {
-        private static readonly Dictionary<Type, object> _mappers = new Dictionary<Type, object>();
+        private static readonly Dictionary<Type, object> _mappers = new();
 
         /// <summary>
         /// Inserts a new record into the database table with the same name as the type (this table must already exist).
