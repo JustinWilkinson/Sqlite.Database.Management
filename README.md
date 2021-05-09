@@ -19,7 +19,7 @@ An xUnit test project with tests for Sqlite.Database.Management.
 
 To use, simply install the Nuget package and add the below using statement.
 ```C#
-using Sqlite.Database.Management
+using Sqlite.Database.Management;
 ```
 
 ### Creating a Database:
@@ -119,7 +119,7 @@ database.Create();
 
 var demo = new Demo { IntProperty = 1, StringProperty = "Hi", BoolProperty = false };
 // Insert a new record.
-database.Insert("Hi");
+database.Insert(demo);
 
 // Update an existing record (note that this method requires a PrimaryKey to be specified).
 demo.StringProperty = "Hello";
