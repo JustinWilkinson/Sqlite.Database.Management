@@ -1,6 +1,7 @@
 ﻿using Sqlite.Database.Management.Exceptions;
 using System;
 using System.Data.SQLite;
+using System.Threading.Tasks;
 
 namespace Sqlite.Database.Management
 {
@@ -60,6 +61,13 @@ namespace Sqlite.Database.Management
         /// Deletes the in memory database.
         /// </summary>
         public override void Delete() => _masterConnection.Dispose();
+
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Deletes the in memory database.
+        /// </summary>
+        public override ValueTask DeleteAsync() => _masterConnection.DisposeAsync();
+#endif
 
         /// <summary>
         /// If the database is shareable, this method gets a new SQLiteConnection and opens it, if not it returns the master connection.
