@@ -12,7 +12,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// </summary>
         public DuplicateColumnException() : base("Duplicate column found in table!")
         {
-
         }
 
         /// <summary>
@@ -22,7 +21,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// <param name="columnName">The name of the column.</param>
         public DuplicateColumnException(string tableName, string columnName) : base($"Duplicate column '{columnName}' found in {tableName}!")
         {
-
         }
     }
 }

@@ -11,7 +11,11 @@ namespace Sqlite.Database.Management
     /// <summary>
     /// Represents a database table.
     /// </summary>
+#if NET5_0_OR_GREATER
+    public record Table
+#else
     public class Table
+#endif
     {
         /// <summary>
         /// Gets or sets the name of the table.
@@ -34,7 +38,6 @@ namespace Sqlite.Database.Management
         /// </summary>
         public Table()
         {
-
         }
 
         /// <summary>

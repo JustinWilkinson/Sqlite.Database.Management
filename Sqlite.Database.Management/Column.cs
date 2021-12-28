@@ -6,7 +6,11 @@ namespace Sqlite.Database.Management
     /// <summary>
     /// Represents a table column
     /// </summary>
+#if NET5_0_OR_GREATER
+    public record Column
+#else
     public class Column
+#endif
     {
         /// <summary>
         /// Gets or sets the name of the column.

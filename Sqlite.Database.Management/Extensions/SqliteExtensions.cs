@@ -10,7 +10,7 @@ namespace Sqlite.Database.Management.Extensions
     /// </summary>
     public static class SqliteExtensions
     {
-        private static readonly HashSet<Type> _booleanTypes = new() { typeof(bool), typeof(bool?) };
+        private static readonly HashSet<Type> BooleanTypes = new() { typeof(bool), typeof(bool?) };
 
         /// <summary>
         /// Adds a parameter to the specified command.
@@ -22,7 +22,7 @@ namespace Sqlite.Database.Management.Extensions
         public static void AddParameter(this SQLiteCommand command, string parameterName, object parameterValue, DbType dbType = DbType.String)
         {
             var type = parameterValue.GetType();
-            if (_booleanTypes.Contains(type))
+            if (BooleanTypes.Contains(type))
             {
                 var nullableBool = parameterValue as bool?;
                 command.Parameters.Add(new SQLiteParameter(parameterName, nullableBool.HasValue ? (nullableBool.Value ? 1 : 0) : new int?()) { DbType = DbType.Int32 });

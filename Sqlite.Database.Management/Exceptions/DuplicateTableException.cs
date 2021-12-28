@@ -12,7 +12,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// </summary>
         public DuplicateTableException() : base("Duplicate table name found in database!")
         {
-
         }
 
         /// <summary>
@@ -22,7 +21,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// <param name="databaseName">The name of the database.</param>
         public DuplicateTableException(string tableName, string databaseName) : base($"Duplicate table name '{tableName}' found in {databaseName}!")
         {
-
         }
     }
 }
