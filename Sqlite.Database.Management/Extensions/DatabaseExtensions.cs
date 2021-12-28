@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Sqlite.Database.Management.Extensions
@@ -8,7 +9,7 @@ namespace Sqlite.Database.Management.Extensions
     /// </summary>
     public static class DatabaseExtensions
     {
-        private static readonly Dictionary<Type, object> _mappers = new();
+        private static readonly ConcurrentDictionary<Type, object> Mappers = new();
 
         /// <summary>
         /// Inserts a new record into the database table with the same name as the type (this table must already exist).
@@ -49,10 +50,10 @@ namespace Sqlite.Database.Management.Extensions
         private static ObjectMapper<T> GetMapper<T>()
         {
             var type = typeof(T);
-            if (!_mappers.TryGetValue(type, out var mapper))
+            if (!Mappers.TryGetValue(type, out var mapper))
             {
                 mapper = new ObjectMapper<T>();
-                _mappers.Add(type, mapper);
+                Mappers.TryAdd(type, mapper);
             }
 
             return mapper as ObjectMapper<T>;

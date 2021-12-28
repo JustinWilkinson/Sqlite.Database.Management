@@ -74,7 +74,8 @@ namespace Sqlite.Database.Management
             {
                 File.Delete(DataSource);
             }
-#if NET5_0
+
+#if NET5_0_OR_GREATER
             return ValueTask.CompletedTask;
 #else
             return new ValueTask();

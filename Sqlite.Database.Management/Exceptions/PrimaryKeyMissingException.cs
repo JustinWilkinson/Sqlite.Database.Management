@@ -12,7 +12,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// </summary>
         public PrimaryKeyMissingException() : base("Primary key for table not found in database!")
         {
-
         }
 
         /// <summary>
@@ -21,7 +20,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// <param name="tableName">The name of the table.</param>
         public PrimaryKeyMissingException(Table table) : base($"Primary key for table '{table.Name}' not found in database!")
         {
-
         }
 
         /// <summary>
@@ -30,7 +28,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// <param name="tableName">The name of the table.</param>
         public PrimaryKeyMissingException(string tableName) : base($"Primary key for table '{tableName}' not found in database!")
         {
-
         }
 
         /// <summary>
@@ -40,7 +37,6 @@ namespace Sqlite.Database.Management.Exceptions
         /// <param name="databaseName">The name of the database.</param>
         public PrimaryKeyMissingException(string tableName, string databaseName) : base($"Primary key for table '{tableName}' not found in {databaseName}!")
         {
-
         }
     }
 }
