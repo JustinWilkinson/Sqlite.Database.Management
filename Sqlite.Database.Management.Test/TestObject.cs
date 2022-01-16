@@ -1,11 +1,17 @@
-﻿namespace Sqlite.Database.Management.Test
+﻿using Sqlite.Database.Management.Attributes;
+
+namespace Sqlite.Database.Management.Test
 {
-    public class TestObject
+    public record TestObject
     {
-        public string StringProperty { get; set; }
+        public string StringProperty { get; init; }
 
-        public int IntProperty { get; set; }
+        [SqlitePrimaryKey]
+        public int IntProperty { get; init; }
 
-        public bool BoolProperty { get; set; }
+        public bool BoolProperty { get; init; }
+
+        [SqliteIgnore]
+        public string Ignored { get; init; }
     }
 }

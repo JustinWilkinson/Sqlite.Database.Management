@@ -17,11 +17,11 @@ namespace Sqlite.Database.Management
         private readonly Dictionary<string, Database> _databases = new();
 
         /// <summary>
-        /// Instantiates and creates a new DatabaseCollection with the (distinct) connectionStrings and tables.
+        /// Instantiates and creates a new <see cref="DatabaseCollection"/> with the (distinct) connection strings and tables.
         /// </summary>
         /// <param name="connectionStrings">Non-empty enumerable of connection strings.</param>
         /// <param name="tables">Tables to assign to each.</param>
-        /// <exception cref="ArgumentNullException">Thrown if connectionStrings or tables is null, or if any connection string is empty.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if connectionStrings or tables is <see langword="null"/>, or if any connection string is empty.</exception>
         /// <exception cref="ArgumentException">Thrown if connectionStrings or tables is empty, or if any connection string is all whitespace.</exception>
         public DatabaseCollection(IEnumerable<string> connectionStrings, ICollection<Table> tables)
         {
@@ -37,10 +37,10 @@ namespace Sqlite.Database.Management
         }
 
         /// <summary>
-        /// Returns the database for the provided connection string, or null if not present.
+        /// Returns the database for the provided connection string, or <see langword="null"/> if not present.
         /// </summary>
         /// <param name="connectionString"></param>
-        /// <returns>The database for the provided connection string, or null if not present</returns>
+        /// <returns>The database for the provided connection string, or <see langword="null"/> if not present</returns>
         public Database this[string connectionString] => _databases.TryGetValue(connectionString, out Database database) ? database : null;
 
         /// <summary>

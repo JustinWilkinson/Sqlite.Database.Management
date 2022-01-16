@@ -1,4 +1,5 @@
-﻿using Sqlite.Database.Management.Enumerations;
+﻿using Sqlite.Database.Management.Attributes;
+using Sqlite.Database.Management.Enumerations;
 using Sqlite.Database.Management.Exceptions;
 using Sqlite.Database.Management.Extensions;
 using System;
@@ -7,7 +8,10 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Sqlite.Database.Management
 {
@@ -25,25 +29,88 @@ namespace Sqlite.Database.Management
         void Insert(DatabaseBase database, T instance);
 
         /// <summary>
-        /// Updates a record in the table corresponding to the instance of T in the database note that the relevant table must already exist, have a primary key, and the primary key must be provided.
+        /// Asynchronously creates a new record in the table corresponding to T in the database. Note that the relevant table must already exist.
         /// </summary>
         /// <param name="database">Database to create record in.</param>
+        /// <param name="instance">Instance to convert to record.</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        /// <returns>>A task representing the insert operation.</returns>
+        Task InsertAsync(DatabaseBase database, T instance, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Updates a record in the table corresponding to the instance of T in the database note that the relevant table must already exist, have a primary key, and the primary key must be provided.
+        /// </summary>
+        /// <param name="database">Database to update record in.</param>
         /// <param name="instance">Instance to convert to record.</param>
         void Update(DatabaseBase database, T instance);
 
         /// <summary>
+        /// Asynchronously updates a record in the table corresponding to T in the database. Note that the relevant table must already exist, have a primary key, and the primary key must be provided.
+        /// </summary>
+        /// <param name="database">Database to update record in.</param>
+        /// <param name="instance">Instance to convert to record.</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        /// <returns>>A task representing the update operation.</returns>
+        Task UpdateAsync(DatabaseBase database, T instance, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Deletes a record in the table corresponding to T in the database. Note that the relevant table must already exist.
         /// </summary>
-        /// <param name="database"></param>
-        /// <param name="instance"></param>
+        /// <param name="database">Database to delete record from.</param>
+        /// <param name="instance">Instance to convert to record.</param>
         void Delete(DatabaseBase database, T instance);
 
         /// <summary>
-        /// Selects records as an IEnumerable of T from the database. Note that the relevant table must already exist.
+        /// Asynchronously deletes a record in the table corresponding to T in the database. Note that the relevant table must already exist.
+        /// </summary>
+        /// <param name="database">Database to delete record from.</param>
+        /// <param name="instance">Instance to convert to record.</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        /// <returns>A task representing the delete operation.</returns>
+        Task DeleteAsync(DatabaseBase database, T instance, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Selects a single record from the database that has the provided id. Note that the relevant table must already exist, and have a primary key.
+        /// </summary>
+        /// <typeparam name="TId">The type of the id column.</typeparam>
+        /// <param name="database">Database to select from</param>
+        /// <param name="id">Id to select record for.</param>
+        /// <returns>A mapped record pulled from the database.</returns>
+        T Select<TId>(DatabaseBase database, TId id);
+
+        /// <summary>
+        /// Asynchronously selects a single record from the database that has the provided id. Note that the relevant table must already exist, and have a primary key.
+        /// </summary>
+        /// <typeparam name="TId">The type of the id column.</typeparam>
+        /// <param name="database">Database to select from</param>
+        /// <param name="id">Id to select record for.</param>
+        /// <returns>A mapped record pulled from the database.</returns>
+        Task<T> SelectAsync<TId>(DatabaseBase database, TId id);
+
+        /// <summary>
+        /// Selects records as an <see cref="IEnumerable{T}"/> from the database. Note that the relevant table must already exist.
         /// </summary>
         /// <param name="database">Database to select from</param>
-        /// <returns>An IEnumerable of T converted from the database records.</returns>
+        /// <returns>An <see cref="IEnumerable{T}"/> converted from the database records.</returns>
         IEnumerable<T> Select(DatabaseBase database);
+
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Asynchronosly selects records as an <see cref="IAsyncEnumerable{T}"/> from the database. Note that the relevant table must already exist.
+        /// </summary>
+        /// <param name="database">Database to select from</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        /// <returns>An <see cref="IAsyncEnumerable{T}"/> converted from the database records.</returns>
+        IAsyncEnumerable<T> SelectAsync(DatabaseBase database, CancellationToken cancellationToken = default);
+#else
+        /// <summary>
+        /// Asynchronosly selects records as an <see cref="IEnumerable{T}"/> from the database. Note that the relevant table must already exist.
+        /// </summary>
+        /// <param name="database">Database to select from.</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> converted from the database records.</returns>
+        Task<IEnumerable<T>> SelectAsync(DatabaseBase database, CancellationToken cancellationToken = default);
+#endif
     }
 
     /// <summary>
@@ -52,12 +119,12 @@ namespace Sqlite.Database.Management
     /// <typeparam name="T">Type of object to map to.</typeparam>
     public class ObjectMapper<T> : IObjectMapper<T>
     {
-        #region Static Readonly
-        private static readonly Dictionary<string, Func<T, object>> _getters = new();
-        private static readonly Dictionary<string, Action<T, object>> _setters = new();
-        private static readonly Func<T> _constructor;
+#region Static Readonly
+        private static readonly Dictionary<string, Func<T, object>> Getters = new();
+        private static readonly Dictionary<string, Action<T, object>> Setters = new();
+        private static readonly Func<T> Constructor;
 
-        private static readonly HashSet<Type> _integerTypes = new()
+        private static readonly HashSet<Type> IntegerTypes = new()
         {
             typeof(byte),
             typeof(sbyte),
@@ -69,14 +136,19 @@ namespace Sqlite.Database.Management
             typeof(ulong)
         };
 
-        private static readonly HashSet<Type> _realTypes = new()
+        private static readonly HashSet<Type> RealTypes = new()
         {
             typeof(float),
             typeof(double),
             typeof(decimal)
         };
-        #endregion
 
+        private static readonly Type PrimaryKeyType;
+#endregion
+
+        /// <summary>
+        /// The table to map.
+        /// </summary>
         public static Table Table { get; }
 
         /// <summary>
@@ -84,32 +156,49 @@ namespace Sqlite.Database.Management
         /// </summary>
         static ObjectMapper()
         {
-            Type type = typeof(T);
+            var type = typeof(T);
+            var properties = type.GetPublicInstanceProperties();
             Table = new Table(type.Name) { Columns = new List<Column>() };
 
-            foreach (var property in type.GetPublicInstanceProperties())
+            foreach (var property in properties)
             {
-                _getters.Add(property.Name, property.GetGetter<T>());
-                _setters.Add(property.Name, property.GetSetter<T>());
-                Table.Columns.Add(GetColumn(property));
+                if (IsPrimaryKey(property))
+                {
+                    Table.PrimaryKey = property.Name;
+                    PrimaryKeyType = property.PropertyType;
+                }
+
+                if (!IsIgnored(property))
+                {
+                    Getters.Add(property.Name, property.GetGetter<T>());
+                    Setters.Add(property.Name, property.GetSetter<T>());
+                    Table.Columns.Add(GetColumn(property));
+                }
             }
 
-            foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public).Where(x => !x.IsInitOnly))
+            if (Table.PrimaryKey is null)
             {
-                _setters.Add(field.Name, (instance, value) => field.SetValue(instance, value));
+                foreach (var property in properties)
+                {
+                    if (property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) || property.Name.Equals($"{Table.Name}Id", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Table.PrimaryKey = property.Name;
+                        PrimaryKeyType = property.PropertyType;
+                    }
+                }
             }
 
             if (type == typeof(string))
             {
-                _constructor = Expression.Lambda<Func<T>>(Expression.Constant(string.Empty)).Compile();
+                Constructor = Expression.Lambda<Func<T>>(Expression.Constant(string.Empty)).Compile();
             }
             else if (type.IsValueType || type.GetConstructor(Type.EmptyTypes) is not null)
             {
-                _constructor = Expression.Lambda<Func<T>>(Expression.New(type)).Compile();
+                Constructor = Expression.Lambda<Func<T>>(Expression.New(type)).Compile();
             }
             else
             {
-                _constructor = () => (T)FormatterServices.GetUninitializedObject(type);
+                Constructor = () => (T)FormatterServices.GetUninitializedObject(type);
             }
         }
 
@@ -123,18 +212,13 @@ namespace Sqlite.Database.Management
             var type = property.PropertyType;
             var name = property.Name;
 
-            if (Table.PrimaryKey is null && (name.Equals("Id", StringComparison.OrdinalIgnoreCase) || name.Equals($"{Table.Name}Id", StringComparison.OrdinalIgnoreCase)))
-            {
-                Table.PrimaryKey = name;
-            }
-
             if (type.IsValueType)
             {
-                if (_integerTypes.Contains(type))
+                if (IntegerTypes.Contains(type))
                 {
                     return new Column(name, ColumnType.Integer) { Nullable = false };
                 }
-                else if (_realTypes.Contains(type))
+                else if (RealTypes.Contains(type))
                 {
                     return new Column(name, ColumnType.Real) { Nullable = false };
                 }
@@ -148,11 +232,11 @@ namespace Sqlite.Database.Management
                 var underlyingType = Nullable.GetUnderlyingType(type);
                 if (underlyingType is not null)
                 {
-                    if (_integerTypes.Contains(underlyingType))
+                    if (IntegerTypes.Contains(underlyingType))
                     {
                         return new Column(name, ColumnType.Integer);
                     }
-                    if (_realTypes.Contains(underlyingType))
+                    if (RealTypes.Contains(underlyingType))
                     {
                         return new Column(name, ColumnType.Real);
                     }
@@ -172,44 +256,85 @@ namespace Sqlite.Database.Management
         }
 
         /// <inheritdoc/>
-        public void Insert(DatabaseBase database, T instance)
-        {
-            var command = new SQLiteCommand($"INSERT INTO {Table.Name} ({string.Join(",", Table.Columns.Select(c => c.Name))}) VALUES({string.Join(",", Table.Columns.Select(c => $"@{c.Name}"))})");
-            Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
-            database.Execute(command);
-        }
+        public void Insert(DatabaseBase database, T instance) => Execute(database, GetInsertCommand(instance));
+
+        /// <inheritdoc/>
+        public Task InsertAsync(DatabaseBase database, T instance, CancellationToken cancellationToken = default) => ExecuteAsync(database, GetInsertCommand(instance), cancellationToken);
 
         /// <inheritdoc/>
         /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
-        public void Update(DatabaseBase database, T instance)
-        {
-            ThrowHelper.RequirePrimaryKey(Table);
-
-            var command = new SQLiteCommand($"UPDATE {Table.Name} SET {string.Join(", ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))} WHERE {Table.PrimaryKey} = @value");
-            command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
-            Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
-            database.Execute(command);
-        }
+        public void Update(DatabaseBase database, T instance) => Execute(database, GetUpdateCommand(instance));
 
         /// <inheritdoc/>
-        public void Delete(DatabaseBase database, T instance)
+        /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
+        public Task UpdateAsync(DatabaseBase database, T instance, CancellationToken cancellationToken = default) => ExecuteAsync(database, GetUpdateCommand(instance), cancellationToken);
+
+        /// <inheritdoc/>
+        public void Delete(DatabaseBase database, T instance) => Execute(database, GetDeleteCommand(instance));
+
+        /// <inheritdoc/>
+        public Task DeleteAsync(DatabaseBase database, T instance, CancellationToken cancellationToken = default) => ExecuteAsync(database, GetDeleteCommand(instance), cancellationToken);
+
+        /// <inheritdoc/>
+        /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
+        public T Select<TId>(DatabaseBase database, TId id)
         {
-            if (Table.PrimaryKey is not null)
+            using var command = GetSelectCommand(id);
+            return database.Execute(command, Map).Single();
+        }
+
+#if !NETSTANDARD2_0
+        /// <inheritdoc/>
+        /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
+        public async Task<T> SelectAsync<TId>(DatabaseBase database, TId id)
+        {
+            var command = GetSelectCommand(id);
+            await using (command.ConfigureAwait(false))
             {
-                var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {Table.PrimaryKey} = @value");
-                command.AddParameter("@value", _getters[Table.PrimaryKey](instance));
-                database.Execute(command);
+                return await database.ExecuteAsync(command, Map).SingleAsync();
             }
-            else
+        }
+#else
+        /// <inheritdoc/>
+        /// <exception cref="PrimaryKeyMissingException">Thrown when the table does not have a primary key.</exception>
+        public async Task<T> SelectAsync<TId>(DatabaseBase database, TId id)
+        {
+            using var command = GetSelectCommand(id);
+            return (await database.ExecuteAsync(command, Map)).Single();
+        }
+#endif
+
+        /// <inheritdoc/>
+        public IEnumerable<T> Select(DatabaseBase database)
+        {
+            using var command = GetSelectCommand();
+            foreach (var record in database.Execute(command, Map))
             {
-                var command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {string.Join(" AND ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))}");
-                Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", _getters[c.Name](instance)));
-                database.Execute(command);
+                yield return record;
             }
         }
 
+#if !NETSTANDARD2_0
         /// <inheritdoc/>
-        public IEnumerable<T> Select(DatabaseBase database) => database.Execute(new SQLiteCommand($"SELECT * FROM {Table.Name}"), reader => Map(reader));
+        public async IAsyncEnumerable<T> SelectAsync(DatabaseBase database, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var command = GetSelectCommand();
+            await using (command.ConfigureAwait(false))
+            {
+                await foreach (var record in database.ExecuteAsync(command, Map, cancellationToken).ConfigureAwait(false))
+                {
+                    yield return record;
+                }
+            }
+        }
+#else
+        /// <inheritdoc/>
+        public async Task<IEnumerable<T>> SelectAsync(DatabaseBase database, CancellationToken cancellationToken = default)
+        {
+            using var command = GetSelectCommand();
+            return await database.ExecuteAsync(command, Map, cancellationToken).ConfigureAwait(false);
+        }
+#endif
 
         /// <summary>
         /// Maps a SQLiteDataReader to an object of type T.
@@ -218,11 +343,11 @@ namespace Sqlite.Database.Management
         /// <returns>A new instance of type T populated from the SQLiteDataReader.</returns>
         public T Map(SQLiteDataReader reader)
         {
-            var instance = _constructor();
+            var instance = Constructor();
 
             for (int i = 0; i < reader.FieldCount; i++)
             {
-                if (_setters.TryGetValue(reader.GetName(i), out var setter))
+                if (Setters.TryGetValue(reader.GetName(i), out var setter))
                 {
                     setter(instance, reader[i]);
                 }
@@ -230,5 +355,110 @@ namespace Sqlite.Database.Management
 
             return instance;
         }
+
+        #region Attribute Helpers
+        private static bool IsPrimaryKey(PropertyInfo property)
+        {
+            var primaryKeyAttribute = property.GetCustomAttribute<SqlitePrimaryKeyAttribute>();
+            if (primaryKeyAttribute is not null)
+            {
+                if (Table.PrimaryKey is not null)
+                {
+                    throw new NotSupportedException("Composite primary keys are not yet supported!");
+                }
+
+                if (IsIgnored(property))
+                {
+                    throw new InvalidOperationException("Cannot ignore the PrimaryKey!");
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsIgnored(PropertyInfo property) => property.GetCustomAttribute<SqliteIgnoreAttribute>() is not null;
+        #endregion
+
+        #region Execute
+        private static void Execute(DatabaseBase database, SQLiteCommand command)
+        {
+            using (command)
+            {
+                database.Execute(command);
+            }
+        }
+
+        private static async Task ExecuteAsync(DatabaseBase database, SQLiteCommand command, CancellationToken cancellationToken)
+        {
+#if !NETSTANDARD2_0
+            await using (command.ConfigureAwait(false))
+#else
+            using (command)
+#endif
+            {
+                await database.ExecuteAsync(command, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        #endregion
+
+        #region Commands
+        private static SQLiteCommand GetInsertCommand(T instance)
+        {
+            var command = new SQLiteCommand($"INSERT INTO {Table.Name} ({string.Join(",", Table.Columns.Select(c => c.Name))}) VALUES({string.Join(",", Table.Columns.Select(c => $"@{c.Name}"))})");
+            Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", Getters[c.Name](instance)));
+            return command;
+        }
+
+        private static SQLiteCommand GetUpdateCommand(T instance)
+        {
+            ThrowHelper.RequirePrimaryKey(Table);
+
+            var command = new SQLiteCommand($"UPDATE {Table.Name} SET {string.Join(", ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))} WHERE {Table.PrimaryKey} = @value");
+            command.AddParameter("@value", Getters[Table.PrimaryKey](instance));
+            Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", Getters[c.Name](instance)));
+            return command;
+        }
+
+        private static SQLiteCommand GetDeleteCommand(T instance)
+        {
+            SQLiteCommand command;
+            if (Table.PrimaryKey is not null)
+            {
+                command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {Table.PrimaryKey} = @value");
+                command.AddParameter("@value", Getters[Table.PrimaryKey](instance));
+            }
+            else
+            {
+                command = new SQLiteCommand($"DELETE FROM {Table.Name} WHERE {string.Join(" AND ", Table.Columns.Select(c => $"{c.Name} = @{c.Name}"))}");
+                Table.Columns.ForEach(c => command.AddParameter($"@{c.Name}", Getters[c.Name](instance)));
+            }
+
+            return command;
+        }
+
+        private static SQLiteCommand GetSelectCommand<TId>(TId id)
+        {
+            ThrowHelper.ThrowIfArgumentNull(id);
+            ThrowHelper.RequirePrimaryKey(Table);
+
+#if NET5_0_OR_GREATER
+            if (!typeof(TId).IsAssignableTo(PrimaryKeyType))
+            {
+                throw new ArgumentException($"Invalid value for PrimaryKey: \"{id}\" is not assignable to {PrimaryKeyType.Name}", nameof(id));
+            }
+#else
+            if (typeof(TId) != PrimaryKeyType)
+            {
+                throw new ArgumentException($"Invalid value for PrimaryKey: \"{id}\" is not of type {PrimaryKeyType.Name}", nameof(id));
+            } 
+#endif
+
+            return new($"SELECT * FROM {Table.Name} WHERE {Table.PrimaryKey} = {id}");
+        }
+
+        private static SQLiteCommand GetSelectCommand() => new($"SELECT * FROM {Table.Name}");
+#endregion
     }
 }
