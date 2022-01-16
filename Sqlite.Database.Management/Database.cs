@@ -2,6 +2,7 @@
 using System;
 using System.Data.SQLite;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Sqlite.Database.Management
@@ -61,6 +62,7 @@ namespace Sqlite.Database.Management
         /// <summary>
         /// Deletes the database file.
         /// </summary>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <exception cref="ArgumentException">path is a zero-length string, contains only white space, or contains one or more invalid characters as defined by System.IO.Path.InvalidPathChars.</exception>
         /// <exception cref="ArgumentNullException">path is null.</exception>
         /// <exception cref="DirectoryNotFoundException">The specified path is invalid.</exception>
@@ -68,10 +70,13 @@ namespace Sqlite.Database.Management
         /// <exception cref="NotSupportedException">path is in an invalid format.</exception>
         /// <exception cref="PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length.</exception>
         /// <exception cref="UnauthorizedAccessException">Cannot access the required file.</exception>
-        public override ValueTask DeleteAsync()
+        public override ValueTask DeleteAsync(CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (File.Exists(DataSource))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 File.Delete(DataSource);
             }
 

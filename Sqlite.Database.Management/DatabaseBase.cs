@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Sqlite.Database.Management
@@ -36,7 +38,8 @@ namespace Sqlite.Database.Management
         /// <summary>
         /// Creates the database asynchronously. Also creates any tables in the Tables collection at this time.
         /// </summary>
-        Task CreateAsync();
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        Task CreateAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes the database.
@@ -47,7 +50,8 @@ namespace Sqlite.Database.Management
         /// <summary>
         /// Deletes the database asynchronously.
         /// </summary>
-        ValueTask DeleteAsync();
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        ValueTask DeleteAsync(CancellationToken cancellationToken = default);
 #endif
 
         /// <summary>
@@ -56,24 +60,34 @@ namespace Sqlite.Database.Management
         /// <returns>An open SQLiteConnection to the database.</returns>
         SQLiteConnection GetOpenConnection();
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Gets a new SQLiteConnection and opens it asynchronously.
         /// </summary>
+        /// <param name="cancellationToken">Cancellation token to observe.</param>
         /// <returns>An open SQLiteConnection to the database.</returns>
-        Task<SQLiteConnection> GetOpenConnectionAsync();
+        ValueTask<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default);
+#else
+        /// <summary>
+        /// Gets a new SQLiteConnection and opens it asynchronously.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token to observe.</param>
+        /// <returns>An open SQLiteConnection to the database.</returns>
+        Task<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default);
+#endif
 
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection.
         /// </summary>
         /// <param name="commandString">Command text to execute</param>
         void Execute(string commandString);
 
-
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection asynchronously.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection asynchronously.
         /// </summary>
         /// <param name="commandString">Command text to execute</param>
-        Task ExecuteAsync(string commandString);
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        Task ExecuteAsync(string commandString, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Executes the provided command using a new connection.
@@ -85,10 +99,11 @@ namespace Sqlite.Database.Management
         /// Executes the provided command using a new connection asyncrhonously.
         /// </summary>
         /// <param name="command">Command to execute</param>
-        Task ExecuteAsync(SQLiteCommand command);
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        Task ExecuteAsync(SQLiteCommand command, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection, returning a scalar value using the specified converter.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection, returning a scalar value using the specified converter.
         /// </summary>
         /// <typeparam name="T">Type to return the scalar as</typeparam>
         /// <param name="commandString">Command text to execute</param>
@@ -97,13 +112,14 @@ namespace Sqlite.Database.Management
         T ExecuteScalar<T>(string commandString, Func<object, T> converter = null);
 
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection, returning a scalar value using the specified converter asyncrhonously.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection, returning a scalar value using the specified converter asyncrhonously.
         /// </summary>
         /// <typeparam name="T">Type to return the scalar as</typeparam>
         /// <param name="commandString">Command text to execute</param>
         /// <param name="converter">Conversion method for returned value</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <returns>An instance of T created by converting the returned value with the specified converter.</returns>
-        Task<T> ExecuteScalarAsync<T>(string commandString, Func<object, T> converter = null);
+        Task<T> ExecuteScalarAsync<T>(string commandString, Func<object, T> converter = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Executes the provided SQLiteCommand using a new connection, returning a scalar value using the specified converter.
@@ -120,11 +136,12 @@ namespace Sqlite.Database.Management
         /// <typeparam name="T">Type to return the scalar as</typeparam>
         /// <param name="command">Command text to execute</param>
         /// <param name="converter">Conversion method for returned value</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <returns>An instance of T created by converting the returned value with the specified converter.</returns>
-        Task<T> ExecuteScalarAsync<T>(SQLiteCommand command, Func<object, T> converter = null);
+        Task<T> ExecuteScalarAsync<T>(SQLiteCommand command, Func<object, T> converter = null, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection, returning an IEnumerable of T generated from each row in the result set using the specified converter.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection, returning an IEnumerable of T generated from each row in the result set using the specified converter.
         /// </summary>
         /// <typeparam name="T">Return type</typeparam>
         /// <param name="commandString">Command text to execute</param>
@@ -144,13 +161,14 @@ namespace Sqlite.Database.Management
 
 #if NETSTANDARD2_0
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection asyncrhonously, returning an IEnumerable of T generated from each row in the result set using the specified converter.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection asyncrhonously, returning an IEnumerable of T generated from each row in the result set using the specified converter.
         /// </summary>
         /// <typeparam name="T">Return type</typeparam>
         /// <param name="commandString">Command text to execute</param>
         /// <param name="converter">Conversion method for rows</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <returns>An IEnumerable of T created by converting the returned rows to T using the specified converter.</returns>
-        Task<IEnumerable<T>> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter);
+        Task<IEnumerable<T>> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Executes the provided SQLiteCommand using a new connection asyncrhonously, returning an IEnumerable of T generated from each row in the result set using the specified converter.
@@ -158,18 +176,20 @@ namespace Sqlite.Database.Management
         /// <typeparam name="T">Return type</typeparam>
         /// <param name="commandString">Command text to execute</param>
         /// <param name="converter">Conversion method for rows</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <returns>An IEnumerable of T created by converting the returned rows to T using the specified converter.</returns>
         /// <exception cref="ArgumentNullException">Thrown when command or converter is null.</exception>
-        Task<IEnumerable<T>> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter);
+        Task<IEnumerable<T>> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default);
 #else
         /// <summary>
-        /// Creates a SQLiteCommand from the provided string and executes it using a new connection asyncrhonously, returning an IAsyncEnumerable of T generated from each row in the result set using the specified converter.
+        /// Creates a <see cref="SQLiteCommand"/> from the provided string and executes it using a new connection asyncrhonously, returning an IAsyncEnumerable of T generated from each row in the result set using the specified converter.
         /// </summary>
         /// <typeparam name="T">Return type</typeparam>
         /// <param name="commandString">Command text to execute</param>
         /// <param name="converter">Conversion method for rows</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <returns>An IEnumerable of T created by converting the returned rows to T using the specified converter.</returns>
-        IAsyncEnumerable<T> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter);
+        IAsyncEnumerable<T> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Executes the provided SQLiteCommand using a new connection asyncrhonously, returning an IAsyncEnumerable of T generated from each row in the result set using the specified converter.
@@ -177,8 +197,9 @@ namespace Sqlite.Database.Management
         /// <typeparam name="T">Return type</typeparam>
         /// <param name="command">Command to execute</param>
         /// <param name="converter">Conversion method for rows</param>
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
         /// <returns>An IEnumerable of T created by converting the returned rows to T using the specified converter.</returns>
-        IAsyncEnumerable<T> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter);
+        IAsyncEnumerable<T> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default);
 #endif
 
         /// <summary>
@@ -195,7 +216,8 @@ namespace Sqlite.Database.Management
         /// </summary>
         /// <param name="action">Action to run in transaction.</param>
         /// <param name="isolationLevel">Isolation Level of the transaction, defaults to Serializable.</param>
-        Task ExecuteInTransactionAsync(Func<SQLiteConnection, Task> action, IsolationLevel isolationLevel = IsolationLevel.Serializable);
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        Task ExecuteInTransactionAsync(Func<SQLiteConnection, Task> action, IsolationLevel isolationLevel = IsolationLevel.Serializable, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Retrieves the value from the named column, and converts it to an instance of T using the specified function.
@@ -218,7 +240,8 @@ namespace Sqlite.Database.Management
         /// </summary>
         /// <param name="table">Table to create.</param>
         /// <param name="createIfNotExists">Include an IF NOT EXISTS clause in the create statement, defults to true.</param>
-        Task CreateAsync(Table table, bool createIfNotExists = true);
+        /// <param name="cancellationToken">CancellationToken to observe.</param>
+        Task CreateAsync(Table table, bool createIfNotExists = true, CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -276,7 +299,7 @@ namespace Sqlite.Database.Management
         }
 
         /// <inheritdoc/>
-        public virtual async Task CreateAsync()
+        public virtual async Task CreateAsync(CancellationToken cancellationToken = default)
         {
             if (Tables is not null && Tables.Count > 0)
             {
@@ -287,7 +310,7 @@ namespace Sqlite.Database.Management
                     var loweredName = table.Name.ToLower();
                     if (!tablesCreated.Contains(loweredName))
                     {
-                        createTasks.Add(CreateAsync(table));
+                        createTasks.Add(CreateAsync(table, cancellationToken: cancellationToken));
                         tablesCreated.Add(loweredName);
                     }
                     else
@@ -305,7 +328,7 @@ namespace Sqlite.Database.Management
 
 #if !NETSTANDARD2_0
         /// <inheritdoc/>
-        public abstract ValueTask DeleteAsync();
+        public abstract ValueTask DeleteAsync(CancellationToken cancellationToken = default);
 #endif
 
         /// <inheritdoc/>
@@ -314,15 +337,25 @@ namespace Sqlite.Database.Management
             var connection = new SQLiteConnection(ConnectionString);
             connection.Open();
             return connection;
-        } 
-        
+        }
+
+#if!NETSTANDARD2_0
         /// <inheritdoc/>
-        public virtual async Task<SQLiteConnection> GetOpenConnectionAsync()
+        public virtual async ValueTask<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default)
         {
             var connection = new SQLiteConnection(ConnectionString);
-            await connection.OpenAsync().ConfigureAwait(false);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             return connection;
         }
+#else
+        /// <inheritdoc/>
+        public virtual async Task<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default)
+        {
+            var connection = new SQLiteConnection(ConnectionString);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return connection;
+        }
+#endif
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
@@ -330,7 +363,7 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
-        public Task ExecuteAsync(string commandString) => ExecuteAsync(new SQLiteCommand(commandString));
+        public Task ExecuteAsync(string commandString, CancellationToken cancellationToken = default) => ExecuteAsync(new SQLiteCommand(commandString), cancellationToken);
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
@@ -351,14 +384,14 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
-        public async Task ExecuteAsync(SQLiteCommand command)
+        public async Task ExecuteAsync(SQLiteCommand command, CancellationToken cancellationToken = default)
         {
             ThrowHelper.ThrowIfArgumentNull(command);
-            var connection = await GetOpenConnectionAsync().ConfigureAwait(false);
+            var connection = await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 command.Connection = connection;
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -372,7 +405,8 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
-        public Task<T> ExecuteScalarAsync<T>(string commandString, Func<object, T> converter = null) => ExecuteScalarAsync(new SQLiteCommand(commandString), converter);
+        public Task<T> ExecuteScalarAsync<T>(string commandString, Func<object, T> converter = null, CancellationToken cancellationToken = default) 
+            => ExecuteScalarAsync(new SQLiteCommand(commandString), converter, cancellationToken);
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
@@ -394,14 +428,14 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
-        public async Task<T> ExecuteScalarAsync<T>(SQLiteCommand command, Func<object, T> converter = null)
+        public async Task<T> ExecuteScalarAsync<T>(SQLiteCommand command, Func<object, T> converter = null, CancellationToken cancellationToken = default)
         {
             ThrowHelper.ThrowIfArgumentNull(command);
-            var connection = await GetOpenConnectionAsync().ConfigureAwait(false);
+            var connection = await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 command.Connection = connection;
-                var scalar = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                var scalar = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
                 return converter is not null ? converter(scalar) : (T)scalar;
             }
             finally
@@ -439,21 +473,22 @@ namespace Sqlite.Database.Management
 #if NETSTANDARD2_0
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command or converter is null.</exception>
-        public Task<IEnumerable<T>> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter) => ExecuteAsync(new SQLiteCommand(commandString), converter);
+        public Task<IEnumerable<T>> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default)
+            => ExecuteAsync(new SQLiteCommand(commandString), converter, cancellationToken);
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command or converter is null.</exception>
-        public async Task<IEnumerable<T>> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter)
+        public async Task<IEnumerable<T>> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default)
         {
             ThrowHelper.ThrowIfArgumentNull(command);
             ThrowHelper.ThrowIfArgumentNull(converter);
-            var connection = await GetOpenConnectionAsync().ConfigureAwait(false);
+            var connection = await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 var results = new List<T>();
                 command.Connection = connection;
                 using var reader = command.ExecuteReader();
-                while (await reader.ReadAsync().ConfigureAwait(false))
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
                     results.Add(converter(reader));
                 }
@@ -462,33 +497,34 @@ namespace Sqlite.Database.Management
             }
             finally
             {
-                await CleanUpAsync(command.Connection).ConfigureAwait(false);
+                await CleanUpAsync(connection).ConfigureAwait(false);
             }
         }
 #else
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command or converter is null.</exception>
-        public IAsyncEnumerable<T> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter) => ExecuteAsync(new SQLiteCommand(commandString), converter);
+        public IAsyncEnumerable<T> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default) 
+            => ExecuteAsync(new SQLiteCommand(commandString), converter, cancellationToken);
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command or converter is null.</exception>
-        public async IAsyncEnumerable<T> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter)
+        public async IAsyncEnumerable<T> ExecuteAsync<T>(SQLiteCommand command, Func<SQLiteDataReader, T> converter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             ThrowHelper.ThrowIfArgumentNull(command);
             ThrowHelper.ThrowIfArgumentNull(converter);
-            var connection = await GetOpenConnectionAsync().ConfigureAwait(false);
+            var connection = await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 command.Connection = connection;
-                using var reader = command.ExecuteReader();
-                while (await reader.ReadAsync().ConfigureAwait(false))
+                using var reader = command.ExecuteReader(); // ExecuteReaderAsync() returns a DbDataReader rather than a SQLiteDataReader.
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                 {
                     yield return converter(reader);
                 }
             }
             finally
             {
-                await CleanUpAsync(command.Connection).ConfigureAwait(false);
+                await CleanUpAsync(connection).ConfigureAwait(false);
             }
         }
 #endif
@@ -519,15 +555,15 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when action is null.</exception>
-        public async Task ExecuteInTransactionAsync(Func<SQLiteConnection, Task> action, IsolationLevel isolationLevel = IsolationLevel.Serializable)
+        public async Task ExecuteInTransactionAsync(Func<SQLiteConnection, Task> action, IsolationLevel isolationLevel = IsolationLevel.Serializable, CancellationToken cancellationToken = default)
         {
             ThrowHelper.ThrowIfArgumentNull(action);
 
-            var connection = await GetOpenConnectionAsync().ConfigureAwait(false);
+            var connection = await GetOpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 #if NETSTANDARD2_0
             var transaction = connection.BeginTransaction(isolationLevel);
 #else
-            var transaction = await connection.BeginTransactionAsync(isolationLevel).ConfigureAwait(false);
+            var transaction = await connection.BeginTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
 #endif
             try
             {
@@ -536,7 +572,7 @@ namespace Sqlite.Database.Management
 #if NETSTANDARD2_0
                 transaction.Commit();
 #else
-                await transaction.CommitAsync().ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 #endif
             }
             catch
@@ -544,7 +580,7 @@ namespace Sqlite.Database.Management
 #if NETSTANDARD2_0
                 transaction.Rollback();
 #else
-                await transaction.RollbackAsync().ConfigureAwait(false);
+                await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
 #endif
                 throw;
             }
@@ -573,10 +609,10 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown if the table is null</exception>
-        public async Task CreateAsync(Table table, bool createIfNotExists = true)
+        public Task CreateAsync(Table table, bool createIfNotExists = true, CancellationToken cancellationToken = default)
         {
             ThrowHelper.InvalidIfNull(table);
-            await ExecuteAsync(table.GetCreateStatement(createIfNotExists)).ConfigureAwait(false);
+            return ExecuteAsync(table.GetCreateStatement(createIfNotExists), cancellationToken);
         }
 
         private void CleanUp(SQLiteConnection connection)
@@ -598,13 +634,19 @@ namespace Sqlite.Database.Management
             return Task.CompletedTask;
         }
 #else
-        private async ValueTask CleanUpAsync(SQLiteConnection connection)
+        private ValueTask CleanUpAsync(SQLiteConnection connection)
         {
             if (_closeConnections)
             {
-                await connection.DisposeAsync().ConfigureAwait(false);
+                return connection.DisposeAsync();
             }
+
+#if NETSTANDARD2_1
+            return new ValueTask();
+#else
+            return ValueTask.CompletedTask;
+#endif
         }
 #endif
-    }
+        }
 }

@@ -36,7 +36,7 @@ database.Tables.Add(new Table("Demo")
         new Column("BoolProperty", ColumnType.Integer) { Nullable = false, CheckExpression = "IN (0, 1)" }
     }
 });
-database.Create(); // This method creates the database and any specified prior to calling this method.
+database.Create(); // This method creates the database and any tables specified prior to calling this method.
 ```
 The `database.Delete();` method can be used to delete the database once you are done with it.
 
@@ -57,7 +57,7 @@ database.Tables.Add(new Table("Demo")
         new Column("BoolProperty", ColumnType.Integer) { Nullable = false, CheckExpression = "IN (0, 1)" }
     }
 });
-database.Create(); // This method creates the database and any specified prior to calling this method.
+database.Create(); // This method creates the database and any tables specified prior to calling this method.
 
 // Do some work with your database here.
 
@@ -84,15 +84,20 @@ database.Create(); // This method creates the database and any specified prior t
 ### Tables from Objects:
 * The above examples require you to specify the table structure yourselves, but Sqlite.Database.Management can also create this structure for you.
 * To do so, we use the generic `ObjectMapper<T>` class.
+* Attributes can also be provided for convenience to specify whether to ignore properties, or to specify that a column should be used as the primary key.
 Suppose you have the following class:
 ```C#
-public class Demo
+public record TestObject
 {
-    public string StringProperty { get; set; }
+    public string StringProperty { get; init; }
 
-    public int IntProperty { get; set; }
+    [SqlitePrimaryKey]
+    public int IntProperty { get; init; }
 
-    public bool BoolProperty { get; set; }
+    public bool BoolProperty { get; init; }
+
+    [SqliteIgnore]
+    public string Ignored { get; init; }
 }
 ```
 Then Sqlite.Database.Management can create a table based on the structure of your class. The following will create the same table structure as seen in the above examples.
@@ -108,7 +113,7 @@ database.Create();
 * A primary key is required for the `Update` extension method in order to uniquely identify the record to update.
 
 ### Extension Methods:
-As stated above, there are a number of extension methods that allow for extremely easy CRUD operations on relatively simple types.
+As stated above, there are a number of extension methods that allow for extremely easy CRUD operations on relatively simple types, both synchronously and asynchronously.
 To use these, you will need to add the following statement to your file `using Sqlite.Database.Management.Extensions`.
 ```C#
 var database = new Database("Data Source=MyDatabase.sqlite;");
@@ -119,17 +124,23 @@ database.Create();
 
 var demo = new Demo { IntProperty = 1, StringProperty = "Hi", BoolProperty = false };
 // Insert a new record.
-database.Insert(demo);
+await database.InsertAsync(demo);
 
 // Update an existing record (note that this method requires a PrimaryKey to be specified).
 demo.StringProperty = "Hello";
-database.Update(demo);
+await database.UpdateAsync(demo);
 
-// Select Records:
-var fromDatabase = database.Select<Demo>(); // Returns a lazily evaluated IEnumerable of Demo objects.
+// Select Records.
+var demoRecords = database.SelectAsync<Demo>(); // Returns a lazily evaluated IAsyncEnumerable of Demo objects.
+
+// Select a single record by providing an id.
+var demoRecords = database.SelectAsync<Demo>(1);
+
+// Filter selection (currently only available client side).
+var list = await database.SelectAsync<Demo>().WhereAsync(x => x.BoolProperty).ToListAsync();
 
 // Delete a record.
-database.Delete(demo);
+await database.DeleteAsync(demo);
 ```
 
 ### Database Collections:

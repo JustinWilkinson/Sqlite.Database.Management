@@ -1,6 +1,7 @@
 ﻿using Sqlite.Database.Management.Exceptions;
 using System;
 using System.Data.SQLite;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Sqlite.Database.Management
@@ -8,7 +9,11 @@ namespace Sqlite.Database.Management
     /// <summary>
     /// Represents an in memory database, for file persisted databases, use <see cref="Database"/>.
     /// </summary>
+#if !NETSTANDARD2_0
+    public class InMemoryDatabase : DatabaseBase, IDisposable, IAsyncDisposable
+#else
     public class InMemoryDatabase : DatabaseBase, IDisposable
+#endif
     {
         /// <summary>
         /// The master connection of the database, when this is closed the databsae will be deleted.
@@ -66,7 +71,7 @@ namespace Sqlite.Database.Management
         /// <summary>
         /// Deletes the in memory database.
         /// </summary>
-        public override ValueTask DeleteAsync() => _masterConnection.DisposeAsync();
+        public override ValueTask DeleteAsync(CancellationToken cancellationToken = default) => _masterConnection.DisposeAsync();
 #endif
 
         /// <summary>
@@ -76,10 +81,37 @@ namespace Sqlite.Database.Management
         /// <returns>An open connection to the database.</returns>
         public override SQLiteConnection GetOpenConnection() => IsShareable ? base.GetOpenConnection() : _masterConnection;
 
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// If the database is shareable, this method gets a new SQLiteConnection and opens it, if not it returns the master connection.
+        /// Note that if the master connection is closed, the database will be deleted.
+        /// </summary>
+        /// <returns>An open connection to the database.</returns>
+        public override async ValueTask<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default) 
+            => IsShareable ? await base.GetOpenConnectionAsync(cancellationToken) : _masterConnection;
+#else
+        /// <summary>
+        /// If the database is shareable, this method gets a new SQLiteConnection and opens it, if not it returns the master connection.
+        /// Note that if the master connection is closed, the database will be deleted.
+        /// </summary>
+        /// <returns>An open connection to the database.</returns>
+        public override async Task<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default) => IsShareable ? await base.GetOpenConnectionAsync() : _masterConnection;
+#endif
+
+        /// <inheritdoc/>
         public void Dispose()
         {
             Delete();
             GC.SuppressFinalize(this);
         }
+
+#if !NETSTANDARD2_0
+        /// <inheritdoc/>
+        public async ValueTask DisposeAsync()
+        {
+            await DeleteAsync();
+            GC.SuppressFinalize(this);
+        }
+#endif
     }
 }

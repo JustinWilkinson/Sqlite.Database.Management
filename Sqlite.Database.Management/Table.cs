@@ -29,7 +29,7 @@ namespace Sqlite.Database.Management
 
         /// <summary>
         /// The name of the column that is the primary key.
-        /// Note that if this is not provided, but a column has name Id or {TableName}Id then these will be automatically used as primary key.
+        /// Note that if this is not provided, but a column has name Id or {TableName}Id then these will be automatically used as a primary key.
         /// </summary>
         public string PrimaryKey { get; set; }
 
@@ -89,18 +89,15 @@ namespace Sqlite.Database.Management
 
                 if (!pkFound)
                 {
-                    if (PrimaryKey is not null)
+                    if (PrimaryKey is not null && column.Name.Equals(PrimaryKey, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (column.Name.Equals(PrimaryKey, StringComparison.OrdinalIgnoreCase))
-                        {
-                            pkFound = true;
-                        }
+                        pkFound = true;
                     }
                     else if (column.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
                     {
                         pkFound = true;
                     }
-                    else if (column.Name.Equals($"{Name}Id"))
+                    else if (column.Name.Equals($"{Name}Id", StringComparison.OrdinalIgnoreCase))
                     {
                         pkFound = true;
                     }
