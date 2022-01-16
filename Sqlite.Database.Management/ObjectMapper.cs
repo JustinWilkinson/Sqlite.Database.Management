@@ -119,7 +119,7 @@ namespace Sqlite.Database.Management
     /// <typeparam name="T">Type of object to map to.</typeparam>
     public class ObjectMapper<T> : IObjectMapper<T>
     {
-#region Static Readonly
+        #region Static Readonly
         private static readonly Dictionary<string, Func<T, object>> Getters = new();
         private static readonly Dictionary<string, Action<T, object>> Setters = new();
         private static readonly Func<T> Constructor;
@@ -144,7 +144,7 @@ namespace Sqlite.Database.Management
         };
 
         private static readonly Type PrimaryKeyType;
-#endregion
+        #endregion
 
         /// <summary>
         /// The table to map.
@@ -452,13 +452,13 @@ namespace Sqlite.Database.Management
             if (typeof(TId) != PrimaryKeyType)
             {
                 throw new ArgumentException($"Invalid value for PrimaryKey: \"{id}\" is not of type {PrimaryKeyType.Name}", nameof(id));
-            } 
+            }
 #endif
 
             return new($"SELECT * FROM {Table.Name} WHERE {Table.PrimaryKey} = {id}");
         }
 
         private static SQLiteCommand GetSelectCommand() => new($"SELECT * FROM {Table.Name}");
-#endregion
+        #endregion
     }
 }

@@ -405,7 +405,7 @@ namespace Sqlite.Database.Management
 
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
-        public Task<T> ExecuteScalarAsync<T>(string commandString, Func<object, T> converter = null, CancellationToken cancellationToken = default) 
+        public Task<T> ExecuteScalarAsync<T>(string commandString, Func<object, T> converter = null, CancellationToken cancellationToken = default)
             => ExecuteScalarAsync(new SQLiteCommand(commandString), converter, cancellationToken);
 
         /// <inheritdoc/>
@@ -503,7 +503,7 @@ namespace Sqlite.Database.Management
 #else
         /// <inheritdoc/>
         /// <exception cref="ArgumentNullException">Thrown when command or converter is null.</exception>
-        public IAsyncEnumerable<T> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default) 
+        public IAsyncEnumerable<T> ExecuteAsync<T>(string commandString, Func<SQLiteDataReader, T> converter, CancellationToken cancellationToken = default)
             => ExecuteAsync(new SQLiteCommand(commandString), converter, cancellationToken);
 
         /// <inheritdoc/>
@@ -648,5 +648,5 @@ namespace Sqlite.Database.Management
 #endif
         }
 #endif
-        }
+    }
 }

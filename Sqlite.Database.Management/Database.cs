@@ -87,5 +87,5 @@ namespace Sqlite.Database.Management
 #endif
         }
 #endif
-        }
+    }
 }
