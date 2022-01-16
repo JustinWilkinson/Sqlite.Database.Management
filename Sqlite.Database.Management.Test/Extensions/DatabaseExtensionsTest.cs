@@ -130,6 +130,38 @@ namespace Sqlite.Database.Management.Test.Extensions
         }
 
         [Fact]
+        public void Select_WithId_Successful()
+        {
+            // Arrange
+            _database.Execute("INSERT INTO TestObject (StringProperty, IntProperty, BoolProperty) VALUES ('Value 1', 1, 1),('Value 2', 2, 0)");
+
+            // Act
+            var result = _database.Select<TestObject, int>(1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Value 1", result.StringProperty);
+            Assert.Equal(1, result.IntProperty);
+            Assert.True(result.BoolProperty);
+        }
+
+        [Fact]
+        public async Task SelectAsync_WithId_Successful()
+        {
+            // Arrange
+            _database.Execute("INSERT INTO TestObject (StringProperty, IntProperty, BoolProperty) VALUES ('Value 1', 1, 1),('Value 2', 2, 0)");
+
+            // Act
+            var result = await _database.SelectAsync<TestObject, int>(1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Value 1", result.StringProperty);
+            Assert.Equal(1, result.IntProperty);
+            Assert.True(result.BoolProperty);
+        }
+
+        [Fact]
         public void Select_SelectsObjectsAndConverts_Successful()
         {
             // Arrange

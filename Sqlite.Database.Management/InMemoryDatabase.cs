@@ -87,7 +87,7 @@ namespace Sqlite.Database.Management
         /// Note that if the master connection is closed, the database will be deleted.
         /// </summary>
         /// <returns>An open connection to the database.</returns>
-        public override async ValueTask<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default) 
+        public override async ValueTask<SQLiteConnection> GetOpenConnectionAsync(CancellationToken cancellationToken = default)
             => IsShareable ? await base.GetOpenConnectionAsync(cancellationToken) : _masterConnection;
 #else
         /// <summary>
